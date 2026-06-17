@@ -433,7 +433,7 @@ export default function RundaApp() {
             position: 'absolute', left: 0, right: 0, bottom: 86, top: 90,
             ...GLASS, background: C.surfaceSolid, backdropFilter: 'blur(34px) saturate(180%)',
             WebkitBackdropFilter: 'blur(34px) saturate(180%)',
-            borderTopLeftRadius: 30, borderTopRightRadius: 30, borderBottom: 'none',
+            borderRadius: 30,
             boxShadow: '0 -12px 40px rgba(0,0,0,0.5)',
             transform: `translateY(${translate}px)`,
             transition: drag ? 'none' : 'transform .32s cubic-bezier(.32,.72,0,1)',
