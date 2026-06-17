@@ -21,6 +21,7 @@ export function PostEditor({ post, onSave, onClose, onPreview }: PostEditorProps
       // Setup a new empty post
       setEditedPost({
         id: Math.random().toString(36).substr(2, 9),
+        profileId: '',
         publishDate: new Date().toISOString().slice(0, 16),
         category: '',
         images: [],
