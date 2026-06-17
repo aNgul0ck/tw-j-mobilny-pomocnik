@@ -5,7 +5,7 @@ import {
 } from './theme';
 import {
   me, friends, activities, pendingRequests,
-  Activity, FriendWithStatus, Profile,
+  Activity, FriendWithStatus,
 } from './mock';
 
 const FONT = "'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif";
@@ -20,11 +20,18 @@ const GLASS: React.CSSProperties = {
 type Tab = 'map' | 'feed' | 'friends' | 'profile';
 
 const TABS: { key: Tab; label: string; icon: string }[] = [
-  { key: 'map', label: 'Mapa', icon: '◈' },
+  { key: 'map', label: 'Osoby', icon: '◈' },
   { key: 'feed', label: 'Aktywności', icon: '◉' },
   { key: 'friends', label: 'Znajomi', icon: '◎' },
   { key: 'profile', label: 'Ja', icon: '◇' },
 ];
+
+const SHEET_TITLE: Record<Tab, string> = {
+  map: 'Osoby',
+  feed: 'Aktywności',
+  friends: 'Znajomi',
+  profile: 'Ja',
+};
 
 // ── UI primitives ──────────────────────────────────────────────
 function Avatar({ initials, color, size = 40, online }: { initials: string; color: string; size?: number; online?: boolean }) {
@@ -76,11 +83,30 @@ function SectionLabel({ children }: { children: React.ReactNode }) {
   );
 }
 
-function PageTitle({ title, action }: { title: string; action?: React.ReactNode }) {
+function Toggle({ on, onChange }: { on: boolean; onChange: () => void }) {
   return (
-    <div style={{ padding: '8px 22px 16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-      <div style={{ fontSize: 30, fontWeight: 800, color: C.text, letterSpacing: -1 }}>{title}</div>
-      {action}
+    <button onClick={onChange} style={{
+      width: 50, height: 30, borderRadius: 999, border: 'none', cursor: 'pointer', padding: 2,
+      background: on ? C.accent : 'rgba(255,255,255,0.18)',
+      display: 'flex', justifyContent: on ? 'flex-end' : 'flex-start',
+      transition: 'background .2s', flexShrink: 0,
+    }}>
+      <span style={{
+        width: 26, height: 26, borderRadius: 13, background: '#fff',
+        boxShadow: '0 2px 6px rgba(0,0,0,0.3)', transition: 'all .2s',
+      }} />
+    </button>
+  );
+}
+
+function Row({ label, value, accent, divider = true }: { label: React.ReactNode; value?: React.ReactNode; accent?: boolean; divider?: boolean }) {
+  return (
+    <div style={{
+      display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+      padding: '14px 16px', borderBottom: divider ? `0.5px solid ${C.borderLight}` : 'none',
+    }}>
+      <span style={{ fontSize: 15, fontWeight: 500, color: accent ? C.planned : C.text }}>{label}</span>
+      {value != null && <span style={{ fontSize: 15, color: C.textSec }}>{value}</span>}
     </div>
   );
 }
@@ -142,6 +168,138 @@ function ActivityCard({ activity, mine }: { activity: Activity; mine?: boolean }
   );
 }
 
+function FriendRow({ f, last }: { f: FriendWithStatus; last?: boolean }) {
+  const a = f.activity;
+  return (
+    <div style={{
+      display: 'flex', alignItems: 'center', gap: 13, padding: '13px 16px',
+      borderBottom: last ? 'none' : `0.5px solid ${C.borderLight}`, opacity: a ? 1 : 0.55,
+    }}>
+      <Avatar initials={f.initials} color={f.color} size={42} online={!!a} />
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <div style={{ fontSize: 15, fontWeight: 600, color: C.text }}>{f.profile.name}</div>
+        {a ? (
+          <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginTop: 2 }}>
+            <span style={{ fontSize: 12, color: ACTIVITY_TYPE_COLORS[a.activity_type] }}>{ACTIVITY_TYPE_ICONS[a.activity_type]}</span>
+            <span style={{ fontSize: 13, fontWeight: 600, color: C.textSec }}>{ACTIVITY_TYPE_LABELS[a.activity_type]}</span>
+            {a.place && <span style={{ fontSize: 12.5, color: C.textTert }}>· {a.place.name}</span>}
+          </div>
+        ) : (
+          <div style={{ fontSize: 12.5, color: C.textTert }}>Lokalizuję…</div>
+        )}
+      </div>
+      {a && <SmallButton variant="green">Dołącz</SmallButton>}
+    </div>
+  );
+}
+
+// ── Sheet content per tab ──────────────────────────────────────
+function OsobyContent() {
+  return (
+    <>
+      <div style={{ display: 'flex', gap: 18, overflowX: 'auto', padding: '4px 6px 16px' }} className="hide-scrollbar">
+        {friends.map(f => (
+          <div key={f.profile.id} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 7, width: 52, flexShrink: 0 }}>
+            <Avatar initials={f.initials} color={f.color} size={44} online={f.online} />
+            <span style={{ fontSize: 11, color: C.textSec, maxWidth: 52, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{f.profile.name.split(' ')[0]}</span>
+          </div>
+        ))}
+      </div>
+      <Card style={{ marginBottom: 16 }}>
+        {friends.map((f, i) => <FriendRow key={f.profile.id} f={f} last={i === friends.length - 1} />)}
+      </Card>
+      <button style={{
+        width: '100%', padding: '16px', borderRadius: 16, border: 'none',
+        background: C.accent, color: '#06210f', fontWeight: 700, fontSize: 15,
+        cursor: 'pointer', fontFamily: FONT, boxShadow: `0 8px 24px ${C.accentBg}`,
+      }}>Zaplanuj spotkanie</button>
+    </>
+  );
+}
+
+function FeedContent() {
+  return (
+    <>
+      {activities.map(a => <ActivityCard key={a.id} activity={a} />)}
+    </>
+  );
+}
+
+function FriendsContent() {
+  const active = friends.filter(f => f.activity);
+  const offline = friends.filter(f => !f.activity);
+  return (
+    <>
+      {pendingRequests.length > 0 && (
+        <>
+          <SectionLabel>Zaproszenia · {pendingRequests.length}</SectionLabel>
+          <Card>
+            {pendingRequests.map((req, i) => (
+              <div key={req.id} style={{ display: 'flex', alignItems: 'center', gap: 13, padding: '13px 16px', borderBottom: i === pendingRequests.length - 1 ? 'none' : `0.5px solid ${C.borderLight}` }}>
+                <Avatar initials={getInitials(req.name)} color={ACTIVITY_TYPE_COLORS.galeria} size={42} />
+                <div style={{ flex: 1 }}>
+                  <div style={{ fontSize: 15, fontWeight: 600, color: C.text }}>{req.name}</div>
+                  <div style={{ fontSize: 12.5, color: C.textTert }}>Zaprasza do znajomych</div>
+                </div>
+                <SmallButton variant="green">Akceptuj</SmallButton>
+                <SmallButton variant="danger">Odrzuć</SmallButton>
+              </div>
+            ))}
+          </Card>
+        </>
+      )}
+      <SectionLabel>Teraz aktywni · {active.length}</SectionLabel>
+      <Card>{active.map((f, i) => <FriendRow key={f.profile.id} f={f} last={i === active.length - 1} />)}</Card>
+      <SectionLabel>Znajomi · {offline.length}</SectionLabel>
+      <Card>{offline.map((f, i) => <FriendRow key={f.profile.id} f={f} last={i === offline.length - 1} />)}</Card>
+    </>
+  );
+}
+
+function JaContent() {
+  const [share, setShare] = useState(true);
+  const [requests, setRequests] = useState(true);
+  return (
+    <>
+      <div style={{ fontSize: 14, color: C.textSec, margin: '-4px 4px 16px' }}>
+        Disseminat Polígon 25, 648, Manacor · Baleary, Hiszpania
+      </div>
+
+      <SectionLabel>Moje położenie</SectionLabel>
+      <Card>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '14px 16px', borderBottom: `0.5px solid ${C.borderLight}` }}>
+          <span style={{ fontSize: 15, fontWeight: 500, color: C.text }}>Udostępniaj moje położenie</span>
+          <Toggle on={share} onChange={() => setShare(v => !v)} />
+        </div>
+        <Row label="Udostępniasz z:" value="Ten telefon" />
+        <Row label="Etykieta położenia" value={<span>Brak ›</span>} divider={false} />
+      </Card>
+
+      <SectionLabel>Powiadomienia</SectionLabel>
+      <Card>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '14px 16px', borderBottom: `0.5px solid ${C.borderLight}` }}>
+          <span style={{ fontSize: 15, fontWeight: 500, color: C.text }}>Zezwalaj na prośby</span>
+          <Toggle on={requests} onChange={() => setRequests(v => !v)} />
+        </div>
+        <Row label="Dostosuj powiadomienia" accent value={<span style={{ color: C.planned }}>›</span>} divider={false} />
+      </Card>
+
+      <SectionLabel>Zaproszenie</SectionLabel>
+      <Card style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: 16 }}>
+        <div>
+          <div style={{ fontSize: 12, color: C.textTert, marginBottom: 4 }}>Twój kod</div>
+          <div style={{ fontSize: 18, fontWeight: 700, color: C.text, letterSpacing: 0.5 }}>{me.invite_code}</div>
+        </div>
+        <SmallButton variant="green">Kopiuj</SmallButton>
+      </Card>
+
+      <div style={{ marginTop: 22 }}>
+        <SmallButton variant="danger">Wyloguj się</SmallButton>
+      </div>
+    </>
+  );
+}
+
 // ── Round glass icon button ────────────────────────────────────
 function GlassIcon({ children, onClick, size = 44 }: { children: React.ReactNode; onClick?: () => void; size?: number }) {
   return (
@@ -154,26 +312,77 @@ function GlassIcon({ children, onClick, size = 44 }: { children: React.ReactNode
   );
 }
 
-// ── Tabs ───────────────────────────────────────────────────────
-function FeedTab() {
+// ── Persistent map background ──────────────────────────────────
+function MapBackground({ active }: { active: Tab }) {
+  const withCoords = activities.filter(a => a.place);
   return (
-    <div style={{ height: '100%', overflowY: 'auto' }} className="hide-scrollbar">
-      <PageTitle title="Aktywności" action={<SmallButton variant="green">+ Co robisz?</SmallButton>} />
-      <div style={{ padding: '0 16px 130px' }}>
-        {activities.map(a => <ActivityCard key={a.id} activity={a} />)}
+    <div style={{ position: 'absolute', inset: 0, overflow: 'hidden' }}>
+      {/* dark green map */}
+      <div style={{
+        position: 'absolute', inset: 0,
+        background: 'radial-gradient(120% 90% at 50% 25%, #2e4138 0%, #243029 55%, #18211c 100%)',
+      }} />
+      {/* faint roads */}
+      <svg style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', opacity: 0.5 }} preserveAspectRatio="none" viewBox="0 0 390 700">
+        <g stroke="rgba(255,255,255,0.12)" strokeWidth="2" fill="none">
+          <path d="M-20 180 Q120 220 200 120 T420 90" />
+          <path d="M40 -20 Q90 200 60 400 T120 720" />
+          <path d="M-20 480 Q160 440 260 520 T430 470" />
+          <path d="M260 -20 Q300 220 360 320 T420 640" />
+        </g>
+        <path d="M40 -20 Q90 200 60 400 T120 720" stroke="rgba(90,140,250,0.4)" strokeWidth="2.5" fill="none" />
+      </svg>
+
+      {/* my location dot */}
+      <div style={{ position: 'absolute', top: '32%', left: '46%' }}>
+        <div style={{ width: 22, height: 22, borderRadius: 11, background: '#0A84FF', border: '3px solid #fff', boxShadow: '0 0 0 6px rgba(10,132,255,0.25), 0 4px 12px rgba(0,0,0,0.4)' }} />
+      </div>
+
+      {/* place pins (only on Osoby tab to keep map clean elsewhere) */}
+      {active === 'map' && withCoords.map((a, i) => {
+        const col = PLACE_TYPE_COLORS[a.place!.type] ?? C.accent;
+        const positions = [{ top: '20%', left: '32%' }, { top: '36%', left: '64%' }, { top: '26%', left: '50%' }];
+        return (
+          <div key={a.id} style={{ position: 'absolute', ...positions[i % 3], transform: 'translate(-50%,-100%)' }}>
+            <div style={{
+              ...GLASS, background: C.surfaceSolid, borderRadius: 999, padding: '5px 12px 5px 8px',
+              display: 'flex', alignItems: 'center', gap: 7,
+              boxShadow: '0 6px 18px rgba(0,0,0,0.4)', fontFamily: FONT,
+            }}>
+              <span style={{ width: 8, height: 8, borderRadius: 4, background: col }} />
+              <span style={{ fontSize: 13, fontWeight: 700, color: C.text }}>{a.profile.name.split(' ')[0]}</span>
+            </div>
+          </div>
+        );
+      })}
+
+      {/* profile btn */}
+      <div style={{ position: 'absolute', top: 16, left: 16 }}>
+        <GlassIcon>{me.name[0]}</GlassIcon>
+      </div>
+
+      {/* map controls stacked (like iOS) */}
+      <div style={{
+        position: 'absolute', top: 16, right: 16, ...GLASS, borderRadius: 22,
+        display: 'flex', flexDirection: 'column', overflow: 'hidden',
+        boxShadow: '0 6px 20px rgba(0,0,0,0.35)',
+      }}>
+        <button style={{ background: 'none', border: 'none', width: 44, height: 44, color: C.text, fontSize: 17, cursor: 'pointer' }}>⧉</button>
+        <div style={{ height: 0.5, background: C.border }} />
+        <button style={{ background: 'none', border: 'none', width: 44, height: 44, color: C.accent, fontSize: 17, cursor: 'pointer' }}>➤</button>
       </div>
     </div>
   );
 }
 
-function MapTab() {
-  const withCoords = activities.filter(a => a.place);
-  const [selected, setSelected] = useState<Activity | null>(null);
+// ── Shell ──────────────────────────────────────────────────────
+export default function RundaApp() {
+  const [active, setActive] = useState<Tab>('map');
 
-  // Draggable bottom sheet
-  const PEEK = 220;
+  // Draggable bottom sheet — shared across all tabs
+  const PEEK = 150;
   const sheetRef = useRef<HTMLDivElement>(null);
-  const [sheetH, setSheetH] = useState(440);
+  const [sheetH, setSheetH] = useState(560);
   const [expanded, setExpanded] = useState(false);
   const [drag, setDrag] = useState<{ startY: number; baseT: number; t: number } | null>(null);
 
@@ -200,260 +409,10 @@ function MapTab() {
     setDrag(null);
   };
 
-  return (
-    <div style={{ height: '100%', position: 'relative', overflow: 'hidden' }}>
-      {/* dark map */}
-      <div
-        onClick={() => setSelected(null)}
-        style={{
-          position: 'absolute', inset: 0,
-          background: 'radial-gradient(120% 90% at 50% 25%, #2e4138 0%, #243029 55%, #18211c 100%)',
-        }}
-      />
-      {/* faint roads */}
-      <svg style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', opacity: 0.5 }} preserveAspectRatio="none" viewBox="0 0 390 700">
-        <g stroke="rgba(255,255,255,0.12)" strokeWidth="2" fill="none">
-          <path d="M-20 180 Q120 220 200 120 T420 90" />
-          <path d="M40 -20 Q90 200 60 400 T120 720" />
-          <path d="M-20 480 Q160 440 260 520 T430 470" />
-          <path d="M260 -20 Q300 220 360 320 T420 640" />
-        </g>
-        <path d="M40 -20 Q90 200 60 400 T120 720" stroke="rgba(90,140,250,0.4)" strokeWidth="2.5" fill="none" />
-      </svg>
-
-      {/* my location dot */}
-      <div style={{ position: 'absolute', top: '40%', left: '46%' }}>
-        <div style={{ width: 22, height: 22, borderRadius: 11, background: '#0A84FF', border: '3px solid #fff', boxShadow: '0 0 0 6px rgba(10,132,255,0.25), 0 4px 12px rgba(0,0,0,0.4)' }} />
-      </div>
-
-      {/* place pins */}
-      {withCoords.map((a, i) => {
-        const col = PLACE_TYPE_COLORS[a.place!.type] ?? C.accent;
-        const positions = [{ top: '24%', left: '32%' }, { top: '50%', left: '64%' }, { top: '66%', left: '40%' }];
-        const isSel = selected?.id === a.id;
-        return (
-          <button
-            key={a.id}
-            onClick={() => setSelected(a)}
-            style={{
-              position: 'absolute', ...positions[i % 3], transform: 'translate(-50%,-100%)',
-              background: 'none', border: 'none', cursor: 'pointer', padding: 0,
-            }}
-          >
-            <div style={{
-              ...GLASS, background: isSel ? 'rgba(48,209,88,0.28)' : C.surfaceSolid,
-              borderRadius: 999, padding: '5px 12px 5px 8px',
-              display: 'flex', alignItems: 'center', gap: 7,
-              border: `0.5px solid ${isSel ? col : C.border}`,
-              boxShadow: '0 6px 18px rgba(0,0,0,0.4)',
-              transform: isSel ? 'scale(1.08)' : 'scale(1)', transition: 'transform .15s',
-              fontFamily: FONT,
-            }}>
-              <span style={{ width: 8, height: 8, borderRadius: 4, background: col }} />
-              <span style={{ fontSize: 13, fontWeight: 700, color: C.text }}>{a.profile.name.split(' ')[0]}</span>
-            </div>
-          </button>
-        );
-      })}
-
-      {/* profile btn */}
-      <div style={{ position: 'absolute', top: 16, left: 16 }}>
-        <GlassIcon>{me.name[0]}</GlassIcon>
-      </div>
-
-      {/* map controls stacked (like iOS) */}
-      <div style={{
-        position: 'absolute', top: 16, right: 16, ...GLASS, borderRadius: 22,
-        display: 'flex', flexDirection: 'column', overflow: 'hidden',
-        boxShadow: '0 6px 20px rgba(0,0,0,0.35)',
-      }}>
-        <button style={{ background: 'none', border: 'none', width: 44, height: 44, color: C.text, fontSize: 17, cursor: 'pointer' }}>⧉</button>
-        <div style={{ height: 0.5, background: C.border }} />
-        <button style={{ background: 'none', border: 'none', width: 44, height: 44, color: C.accent, fontSize: 17, cursor: 'pointer' }}>➤</button>
-      </div>
-
-      {/* live pill */}
-      <div style={{
-        position: 'absolute', top: 18, left: '50%', transform: 'translateX(-50%)',
-        ...GLASS, borderRadius: 999, padding: '8px 14px',
-        display: 'flex', alignItems: 'center', gap: 8, boxShadow: '0 6px 20px rgba(0,0,0,0.3)',
-      }}>
-        <span style={{ width: 7, height: 7, borderRadius: 4, background: C.accent, boxShadow: `0 0 8px ${C.accent}` }} />
-        <span style={{ fontSize: 12.5, fontWeight: 600, color: C.text }}>{withCoords.length} osób w pobliżu</span>
-      </div>
-
-      {/* selected pin detail card */}
-      {selected && (
-        <div style={{ position: 'absolute', left: 16, right: 16, bottom: PEEK + 28, zIndex: 5 }}>
-          <ActivityCard activity={selected} />
-        </div>
-      )}
-
-      {/* draggable glass bottom sheet */}
-      <div
-        ref={sheetRef}
-        style={{
-          position: 'absolute', left: 0, right: 0, bottom: 0,
-          ...GLASS, background: C.surfaceSolid, backdropFilter: 'blur(34px) saturate(180%)',
-          WebkitBackdropFilter: 'blur(34px) saturate(180%)',
-          borderTopLeftRadius: 30, borderTopRightRadius: 30, borderBottom: 'none',
-          boxShadow: '0 -12px 40px rgba(0,0,0,0.5)',
-          transform: `translateY(${translate}px)`,
-          transition: drag ? 'none' : 'transform .32s cubic-bezier(.32,.72,0,1)',
-          touchAction: 'none',
-        }}
-      >
-        <div
-          onPointerDown={onPointerDown}
-          onPointerMove={onPointerMove}
-          onPointerUp={onPointerUp}
-          onClick={() => setExpanded(v => !v)}
-          style={{ padding: '12px 22px 4px', cursor: 'grab', touchAction: 'none' }}
-        >
-          <div style={{ width: 38, height: 5, borderRadius: 3, background: 'rgba(255,255,255,0.22)', margin: '0 auto 14px' }} />
-          <div style={{ fontSize: 26, fontWeight: 800, color: C.text, letterSpacing: -0.8 }}>Osoby</div>
-        </div>
-
-        <div style={{ padding: '8px 16px 120px' }}>
-          <div style={{ display: 'flex', gap: 18, overflowX: 'auto', padding: '4px 6px 16px' }} className="hide-scrollbar">
-            {friends.map(f => (
-              <div key={f.profile.id} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 7, width: 52, flexShrink: 0 }}>
-                <Avatar initials={f.initials} color={f.color} size={44} online={f.online} />
-                <span style={{ fontSize: 11, color: C.textSec, maxWidth: 52, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{f.profile.name.split(' ')[0]}</span>
-              </div>
-            ))}
-          </div>
-
-          <Card style={{ marginBottom: 16 }}>
-            {friends.map((f, i) => <FriendRow key={f.profile.id} f={f} last={i === friends.length - 1} />)}
-          </Card>
-
-          <button style={{
-            width: '100%', padding: '16px', borderRadius: 16, border: 'none',
-            background: C.accent, color: '#06210f', fontWeight: 700, fontSize: 15,
-            cursor: 'pointer', fontFamily: FONT, boxShadow: `0 8px 24px ${C.accentBg}`,
-          }}>Zaplanuj spotkanie</button>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function FriendRow({ f, last }: { f: FriendWithStatus; last?: boolean }) {
-  const a = f.activity;
-  return (
-    <div style={{
-      display: 'flex', alignItems: 'center', gap: 13, padding: '13px 16px',
-      borderBottom: last ? 'none' : `0.5px solid ${C.borderLight}`, opacity: a ? 1 : 0.55,
-    }}>
-      <Avatar initials={f.initials} color={f.color} size={42} online={!!a} />
-      <div style={{ flex: 1, minWidth: 0 }}>
-        <div style={{ fontSize: 15, fontWeight: 600, color: C.text }}>{f.profile.name}</div>
-        {a ? (
-          <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginTop: 2 }}>
-            <span style={{ fontSize: 12, color: ACTIVITY_TYPE_COLORS[a.activity_type] }}>{ACTIVITY_TYPE_ICONS[a.activity_type]}</span>
-            <span style={{ fontSize: 13, fontWeight: 600, color: C.textSec }}>{ACTIVITY_TYPE_LABELS[a.activity_type]}</span>
-            {a.place && <span style={{ fontSize: 12.5, color: C.textTert }}>· {a.place.name}</span>}
-          </div>
-        ) : (
-          <div style={{ fontSize: 12.5, color: C.textTert }}>Lokalizuję…</div>
-        )}
-      </div>
-      {a && <SmallButton variant="green">Dołącz</SmallButton>}
-    </div>
-  );
-}
-
-function FriendsTab() {
-  const active = friends.filter(f => f.activity);
-  const offline = friends.filter(f => !f.activity);
-  return (
-    <div style={{ height: '100%', overflowY: 'auto' }} className="hide-scrollbar">
-      <PageTitle title="Znajomi" action={<SmallButton variant="green">Dodaj</SmallButton>} />
-      <div style={{ padding: '0 16px 130px' }}>
-        {pendingRequests.length > 0 && (
-          <>
-            <SectionLabel>Zaproszenia · {pendingRequests.length}</SectionLabel>
-            <Card>
-              {pendingRequests.map((req, i) => (
-                <div key={req.id} style={{ display: 'flex', alignItems: 'center', gap: 13, padding: '13px 16px', borderBottom: i === pendingRequests.length - 1 ? 'none' : `0.5px solid ${C.borderLight}` }}>
-                  <Avatar initials={getInitials(req.name)} color={ACTIVITY_TYPE_COLORS.galeria} size={42} />
-                  <div style={{ flex: 1 }}>
-                    <div style={{ fontSize: 15, fontWeight: 600, color: C.text }}>{req.name}</div>
-                    <div style={{ fontSize: 12.5, color: C.textTert }}>Zaprasza do znajomych</div>
-                  </div>
-                  <SmallButton variant="green">Akceptuj</SmallButton>
-                  <SmallButton variant="danger">Odrzuć</SmallButton>
-                </div>
-              ))}
-            </Card>
-          </>
-        )}
-        <SectionLabel>Teraz aktywni · {active.length}</SectionLabel>
-        <Card>{active.map((f, i) => <FriendRow key={f.profile.id} f={f} last={i === active.length - 1} />)}</Card>
-        <SectionLabel>Znajomi · {offline.length}</SectionLabel>
-        <Card>{offline.map((f, i) => <FriendRow key={f.profile.id} f={f} last={i === offline.length - 1} />)}</Card>
-      </div>
-    </div>
-  );
-}
-
-function ProfileTab() {
-  const myPlaces = [
-    { id: 1, name: 'Forum Kawowe', type: 'cafe', radius_m: 120 },
-    { id: 2, name: 'Park Łazienki', type: 'park', radius_m: 250 },
-    { id: 3, name: 'Zdrofit Centrum', type: 'gym', radius_m: 100 },
-  ];
-  return (
-    <div style={{ height: '100%', overflowY: 'auto' }} className="hide-scrollbar">
-      <PageTitle title="Ja" />
-      <div style={{ padding: '0 16px 130px' }}>
-        <Card style={{ padding: 20, display: 'flex', alignItems: 'center', gap: 16, marginBottom: 8 }}>
-          <Avatar initials={getInitials(me.name)} color={ACTIVITY_TYPE_COLORS.spacer} size={66} />
-          <div style={{ flex: 1, minWidth: 0 }}>
-            <div style={{ fontSize: 20, fontWeight: 700, color: C.text }}>{me.name}</div>
-            <div style={{ fontSize: 13.5, color: C.textSec }}>@{me.username}</div>
-          </div>
-          <SmallButton>Edytuj</SmallButton>
-        </Card>
-
-        <SectionLabel>Zaproszenie</SectionLabel>
-        <Card style={{ padding: 16, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <div>
-            <div style={{ fontSize: 12, color: C.textTert, marginBottom: 4 }}>Twój kod</div>
-            <div style={{ fontSize: 18, fontWeight: 700, color: C.text, letterSpacing: 0.5 }}>{me.invite_code}</div>
-          </div>
-          <SmallButton variant="green">Kopiuj</SmallButton>
-        </Card>
-
-        <SectionLabel>Moje miejsca · {myPlaces.length}</SectionLabel>
-        <Card>
-          {myPlaces.map((pl, i) => {
-            const col = PLACE_TYPE_COLORS[pl.type] ?? C.accent;
-            return (
-              <div key={pl.id} style={{ display: 'flex', alignItems: 'center', gap: 13, padding: '14px 16px', borderBottom: i === myPlaces.length - 1 ? 'none' : `0.5px solid ${C.borderLight}` }}>
-                <span style={{ width: 10, height: 10, borderRadius: 5, background: col, boxShadow: `0 0 8px ${col}80` }} />
-                <div style={{ flex: 1 }}>
-                  <div style={{ fontSize: 15, fontWeight: 600, color: C.text }}>{pl.name}</div>
-                  <div style={{ fontSize: 12.5, color: C.textTert }}>Promień {pl.radius_m} m</div>
-                </div>
-                <span style={{ fontSize: 12.5, fontWeight: 600, color: C.accent }}>Włączone</span>
-              </div>
-            );
-          })}
-        </Card>
-
-        <div style={{ marginTop: 26 }}>
-          <SmallButton variant="danger">Wyloguj się</SmallButton>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-// ── Shell ──────────────────────────────────────────────────────
-export default function RundaApp() {
-  const [active, setActive] = useState<Tab>('map');
+  const selectTab = (key: Tab) => {
+    setActive(key);
+    setExpanded(true);
+  };
 
   return (
     <div style={{ minHeight: '100vh', background: '#000', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: FONT }}>
@@ -462,11 +421,45 @@ export default function RundaApp() {
         background: C.bg, position: 'relative', overflow: 'hidden',
         boxShadow: '0 24px 80px rgba(0,0,0,0.6)',
       }}>
+        {/* persistent map */}
         <div style={{ position: 'absolute', inset: 0, paddingTop: 'env(safe-area-inset-top, 14px)' }}>
-          {active === 'map' && <MapTab />}
-          {active === 'feed' && <FeedTab />}
-          {active === 'friends' && <FriendsTab />}
-          {active === 'profile' && <ProfileTab />}
+          <MapBackground active={active} />
+        </div>
+
+        {/* draggable glass bottom sheet */}
+        <div
+          ref={sheetRef}
+          style={{
+            position: 'absolute', left: 0, right: 0, bottom: 0, top: 90,
+            ...GLASS, background: C.surfaceSolid, backdropFilter: 'blur(34px) saturate(180%)',
+            WebkitBackdropFilter: 'blur(34px) saturate(180%)',
+            borderTopLeftRadius: 30, borderTopRightRadius: 30, borderBottom: 'none',
+            boxShadow: '0 -12px 40px rgba(0,0,0,0.5)',
+            transform: `translateY(${translate}px)`,
+            transition: drag ? 'none' : 'transform .32s cubic-bezier(.32,.72,0,1)',
+            touchAction: 'none', display: 'flex', flexDirection: 'column',
+          }}
+        >
+          <div
+            onPointerDown={onPointerDown}
+            onPointerMove={onPointerMove}
+            onPointerUp={onPointerUp}
+            onClick={() => setExpanded(v => !v)}
+            style={{ padding: '12px 22px 6px', cursor: 'grab', touchAction: 'none', flexShrink: 0 }}
+          >
+            <div style={{ width: 38, height: 5, borderRadius: 3, background: 'rgba(255,255,255,0.22)', margin: '0 auto 14px' }} />
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div style={{ fontSize: 28, fontWeight: 800, color: C.text, letterSpacing: -0.8 }}>{SHEET_TITLE[active]}</div>
+              {active === 'profile' && <GlassIcon size={38}>+</GlassIcon>}
+            </div>
+          </div>
+
+          <div style={{ flex: 1, overflowY: 'auto', padding: '8px 16px 120px' }} className="hide-scrollbar">
+            {active === 'map' && <OsobyContent />}
+            {active === 'feed' && <FeedContent />}
+            {active === 'friends' && <FriendsContent />}
+            {active === 'profile' && <JaContent />}
+          </div>
         </div>
 
         {/* glass tab bar */}
@@ -474,12 +467,12 @@ export default function RundaApp() {
           position: 'absolute', left: 16, right: 16, bottom: 18, borderRadius: 26,
           ...GLASS, background: 'rgba(20,23,24,0.6)',
           backdropFilter: 'blur(30px) saturate(180%)', WebkitBackdropFilter: 'blur(30px) saturate(180%)',
-          boxShadow: '0 10px 34px rgba(0,0,0,0.45)', display: 'flex', padding: '11px 8px',
+          boxShadow: '0 10px 34px rgba(0,0,0,0.45)', display: 'flex', padding: '11px 8px', zIndex: 10,
         }}>
           {TABS.map(tab => {
             const isActive = active === tab.key;
             return (
-              <button key={tab.key} onClick={() => setActive(tab.key)} style={{
+              <button key={tab.key} onClick={() => selectTab(tab.key)} style={{
                 flex: 1, background: 'none', border: 'none', cursor: 'pointer',
                 display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4,
                 fontFamily: FONT, padding: 0,
