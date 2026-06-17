@@ -5,7 +5,7 @@ import {
 } from './theme';
 import {
   me, friends, activities, pendingRequests,
-  Activity, FriendWithStatus,
+  Activity, FriendWithStatus, Profile,
 } from './mock';
 
 const FONT = "'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif";
@@ -32,6 +32,10 @@ const SHEET_TITLE: Record<Tab, string> = {
   friends: 'Znajomi',
   profile: 'Ja',
 };
+
+// People sharing location right now (subset shown on the map).
+const sharing = friends.filter(f => f.online);
+const PIN_POS = [{ top: '22%', left: '30%' }, { top: '30%', left: '66%' }, { top: '46%', left: '52%' }];
 
 // ── UI primitives ──────────────────────────────────────────────
 function Avatar({ initials, color, size = 40, online }: { initials: string; color: string; size?: number; online?: boolean }) {
@@ -99,20 +103,35 @@ function Toggle({ on, onChange }: { on: boolean; onChange: () => void }) {
   );
 }
 
-function Row({ label, value, accent, divider = true }: { label: React.ReactNode; value?: React.ReactNode; accent?: boolean; divider?: boolean }) {
+function Row({ label, value, onClick, divider = true }: { label: React.ReactNode; value?: React.ReactNode; onClick?: () => void; divider?: boolean }) {
   return (
-    <div style={{
+    <div onClick={onClick} style={{
       display: 'flex', alignItems: 'center', justifyContent: 'space-between',
       padding: '14px 16px', borderBottom: divider ? `0.5px solid ${C.borderLight}` : 'none',
+      cursor: onClick ? 'pointer' : 'default',
     }}>
-      <span style={{ fontSize: 15, fontWeight: 500, color: accent ? C.planned : C.text }}>{label}</span>
+      <span style={{ fontSize: 15, fontWeight: 500, color: C.text }}>{label}</span>
       {value != null && <span style={{ fontSize: 15, color: C.textSec }}>{value}</span>}
     </div>
   );
 }
 
-// ── Activity card ──────────────────────────────────────────────
-function ActivityCard({ activity, mine }: { activity: Activity; mine?: boolean }) {
+// ── Round glass icon button ────────────────────────────────────
+function GlassIcon({ children, onClick, size = 44 }: { children: React.ReactNode; onClick?: () => void; size?: number }) {
+  return (
+    <button onClick={onClick} style={{
+      ...GLASS, width: size, height: size, borderRadius: size / 2, cursor: 'pointer',
+      display: 'flex', alignItems: 'center', justifyContent: 'center',
+      color: C.text, fontSize: 18, fontWeight: 700, fontFamily: FONT,
+      boxShadow: '0 6px 20px rgba(0,0,0,0.35)',
+    }}>{children}</button>
+  );
+}
+
+// ── Activity card (Aktywności) ─────────────────────────────────
+function ActivityCard({ activity, mine, joined, onToggleJoin }: {
+  activity: Activity; mine?: boolean; joined?: boolean; onToggleJoin?: () => void;
+}) {
   const col = ACTIVITY_TYPE_COLORS[activity.activity_type];
   const icon = ACTIVITY_TYPE_ICONS[activity.activity_type];
   const label = ACTIVITY_TYPE_LABELS[activity.activity_type];
@@ -145,70 +164,69 @@ function ActivityCard({ activity, mine }: { activity: Activity; mine?: boolean }
           {activity.message && (
             <div style={{ fontSize: 13.5, color: C.textSec, fontStyle: 'italic', marginTop: 7 }}>"{activity.message}"</div>
           )}
-          {activity.joins.length > 0 && (
+          {(activity.joins.length > 0 || joined) && (
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 11 }}>
-              <div style={{ display: 'flex' }}>
-                {activity.joins.map((j, i) => (
-                  <div key={j.id} style={{ marginLeft: i === 0 ? 0 : -8 }}>
-                    <Avatar initials={getInitials(j.profile.name)} color={ACTIVITY_TYPE_COLORS.coworking} size={24} />
-                  </div>
-                ))}
-              </div>
-              <span style={{ fontSize: 12.5, color: C.textSec }}>{activity.joins.length} dołącza</span>
+              <span style={{ fontSize: 12.5, color: C.textSec }}>
+                {activity.joins.length + (joined ? 1 : 0)} dołącza{joined ? ' (Ty)' : ''}
+              </span>
             </div>
           )}
         </div>
         <div style={{ alignSelf: 'center' }}>
           {mine
             ? <SmallButton variant="danger">Zakończ</SmallButton>
-            : <SmallButton variant="green">Dołącz</SmallButton>}
+            : <SmallButton variant={joined ? 'plain' : 'green'} onClick={onToggleJoin}>{joined ? 'Anuluj' : 'Dołącz'}</SmallButton>}
         </div>
       </div>
     </Card>
   );
 }
 
-function FriendRow({ f, last }: { f: FriendWithStatus; last?: boolean }) {
-  const a = f.activity;
-  return (
-    <div style={{
-      display: 'flex', alignItems: 'center', gap: 13, padding: '13px 16px',
-      borderBottom: last ? 'none' : `0.5px solid ${C.borderLight}`, opacity: a ? 1 : 0.55,
-    }}>
-      <Avatar initials={f.initials} color={f.color} size={42} online={!!a} />
-      <div style={{ flex: 1, minWidth: 0 }}>
-        <div style={{ fontSize: 15, fontWeight: 600, color: C.text }}>{f.profile.name}</div>
-        {a ? (
-          <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginTop: 2 }}>
-            <span style={{ fontSize: 12, color: ACTIVITY_TYPE_COLORS[a.activity_type] }}>{ACTIVITY_TYPE_ICONS[a.activity_type]}</span>
-            <span style={{ fontSize: 13, fontWeight: 600, color: C.textSec }}>{ACTIVITY_TYPE_LABELS[a.activity_type]}</span>
-            {a.place && <span style={{ fontSize: 12.5, color: C.textTert }}>· {a.place.name}</span>}
-          </div>
-        ) : (
-          <div style={{ fontSize: 12.5, color: C.textTert }}>Lokalizuję…</div>
-        )}
-      </div>
-      {a && <SmallButton variant="green">Dołącz</SmallButton>}
-    </div>
-  );
-}
-
-// ── Sheet content per tab ──────────────────────────────────────
-function OsobyContent() {
+// ── Tab content: Osoby (live location) ─────────────────────────
+function OsobyContent({ onFocus, onPlan }: { onFocus: (id: string) => void; onPlan: () => void }) {
   return (
     <>
       <div style={{ display: 'flex', gap: 18, overflowX: 'auto', padding: '4px 6px 16px' }} className="hide-scrollbar">
-        {friends.map(f => (
-          <div key={f.profile.id} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 7, width: 52, flexShrink: 0 }}>
+        {sharing.map(f => (
+          <button key={f.profile.id} onClick={() => onFocus(f.profile.id)} style={{
+            display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 7, width: 52, flexShrink: 0,
+            background: 'none', border: 'none', cursor: 'pointer', fontFamily: FONT, padding: 0,
+          }}>
             <Avatar initials={f.initials} color={f.color} size={44} online={f.online} />
             <span style={{ fontSize: 11, color: C.textSec, maxWidth: 52, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{f.profile.name.split(' ')[0]}</span>
-          </div>
+          </button>
         ))}
       </div>
+
+      <SectionLabel>Udostępniają położenie · {sharing.length}</SectionLabel>
       <Card style={{ marginBottom: 16 }}>
-        {friends.map((f, i) => <FriendRow key={f.profile.id} f={f} last={i === friends.length - 1} />)}
+        {sharing.map((f, i) => {
+          const a = f.activity;
+          return (
+            <div key={f.profile.id} style={{
+              display: 'flex', alignItems: 'center', gap: 13, padding: '13px 16px',
+              borderBottom: i === sharing.length - 1 ? 'none' : `0.5px solid ${C.borderLight}`,
+            }}>
+              <Avatar initials={f.initials} color={f.color} size={42} online />
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ fontSize: 15, fontWeight: 600, color: C.text }}>{f.profile.name}</div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginTop: 2 }}>
+                  {a ? (
+                    <>
+                      <span style={{ fontSize: 12, color: ACTIVITY_TYPE_COLORS[a.activity_type] }}>{ACTIVITY_TYPE_ICONS[a.activity_type]}</span>
+                      <span style={{ fontSize: 13, fontWeight: 600, color: C.textSec }}>{ACTIVITY_TYPE_LABELS[a.activity_type]}</span>
+                      {a.place && <span style={{ fontSize: 12.5, color: C.textTert }}>· {a.place.name}</span>}
+                    </>
+                  ) : <span style={{ fontSize: 12.5, color: C.textTert }}>W pobliżu</span>}
+                </div>
+              </div>
+              <SmallButton onClick={() => onFocus(f.profile.id)}>Pokaż</SmallButton>
+            </div>
+          );
+        })}
       </Card>
-      <button style={{
+
+      <button onClick={onPlan} style={{
         width: '100%', padding: '16px', borderRadius: 16, border: 'none',
         background: C.accent, color: '#06210f', fontWeight: 700, fontSize: 15,
         cursor: 'pointer', fontFamily: FONT, boxShadow: `0 8px 24px ${C.accentBg}`,
@@ -217,48 +235,76 @@ function OsobyContent() {
   );
 }
 
-function FeedContent() {
+// ── Tab content: Aktywności ────────────────────────────────────
+function FeedContent({ joined, onToggleJoin }: { joined: Record<string, boolean>; onToggleJoin: (id: string) => void }) {
   return (
     <>
-      {activities.map(a => <ActivityCard key={a.id} activity={a} />)}
+      {activities.map(a => (
+        <ActivityCard key={a.id} activity={a} joined={!!joined[a.id]} onToggleJoin={() => onToggleJoin(a.id)} />
+      ))}
     </>
   );
 }
 
-function FriendsContent() {
-  const active = friends.filter(f => f.activity);
-  const offline = friends.filter(f => !f.activity);
+// ── Tab content: Znajomi (management) ──────────────────────────
+function FriendsContent({ requests, onAccept, onReject }: {
+  requests: Profile[]; onAccept: (id: string) => void; onReject: (id: string) => void;
+}) {
   return (
     <>
-      {pendingRequests.length > 0 && (
+      {requests.length > 0 && (
         <>
-          <SectionLabel>Zaproszenia · {pendingRequests.length}</SectionLabel>
+          <SectionLabel>Zaproszenia · {requests.length}</SectionLabel>
           <Card>
-            {pendingRequests.map((req, i) => (
-              <div key={req.id} style={{ display: 'flex', alignItems: 'center', gap: 13, padding: '13px 16px', borderBottom: i === pendingRequests.length - 1 ? 'none' : `0.5px solid ${C.borderLight}` }}>
+            {requests.map((req, i) => (
+              <div key={req.id} style={{ display: 'flex', alignItems: 'center', gap: 13, padding: '13px 16px', borderBottom: i === requests.length - 1 ? 'none' : `0.5px solid ${C.borderLight}` }}>
                 <Avatar initials={getInitials(req.name)} color={ACTIVITY_TYPE_COLORS.galeria} size={42} />
-                <div style={{ flex: 1 }}>
+                <div style={{ flex: 1, minWidth: 0 }}>
                   <div style={{ fontSize: 15, fontWeight: 600, color: C.text }}>{req.name}</div>
                   <div style={{ fontSize: 12.5, color: C.textTert }}>Zaprasza do znajomych</div>
                 </div>
-                <SmallButton variant="green">Akceptuj</SmallButton>
-                <SmallButton variant="danger">Odrzuć</SmallButton>
+                <SmallButton variant="green" onClick={() => onAccept(req.id)}>Akceptuj</SmallButton>
+                <SmallButton variant="danger" onClick={() => onReject(req.id)}>Odrzuć</SmallButton>
               </div>
             ))}
           </Card>
         </>
       )}
-      <SectionLabel>Teraz aktywni · {active.length}</SectionLabel>
-      <Card>{active.map((f, i) => <FriendRow key={f.profile.id} f={f} last={i === active.length - 1} />)}</Card>
-      <SectionLabel>Znajomi · {offline.length}</SectionLabel>
-      <Card>{offline.map((f, i) => <FriendRow key={f.profile.id} f={f} last={i === offline.length - 1} />)}</Card>
+
+      <SectionLabel>Wszyscy znajomi · {friends.length}</SectionLabel>
+      <Card>
+        {friends.map((f, i) => (
+          <div key={f.profile.id} style={{
+            display: 'flex', alignItems: 'center', gap: 13, padding: '13px 16px',
+            borderBottom: i === friends.length - 1 ? 'none' : `0.5px solid ${C.borderLight}`,
+          }}>
+            <Avatar initials={f.initials} color={f.color} size={42} online={f.online} />
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ fontSize: 15, fontWeight: 600, color: C.text }}>{f.profile.name}</div>
+              <div style={{ fontSize: 12.5, color: f.online ? C.accentLight : C.textTert, marginTop: 2 }}>
+                {f.online ? 'Udostępnia położenie' : 'Offline'}
+              </div>
+            </div>
+            <span style={{ fontSize: 18, color: C.textTert }}>›</span>
+          </div>
+        ))}
+      </Card>
     </>
   );
 }
 
+// ── Tab content: Ja (settings) ─────────────────────────────────
 function JaContent() {
   const [share, setShare] = useState(true);
   const [requests, setRequests] = useState(true);
+  const [copied, setCopied] = useState(false);
+
+  const copy = () => {
+    navigator.clipboard?.writeText(me.invite_code).catch(() => {});
+    setCopied(true);
+    setTimeout(() => setCopied(false), 1600);
+  };
+
   return (
     <>
       <div style={{ fontSize: 14, color: C.textSec, margin: '-4px 4px 16px' }}>
@@ -272,7 +318,7 @@ function JaContent() {
           <Toggle on={share} onChange={() => setShare(v => !v)} />
         </div>
         <Row label="Udostępniasz z:" value="Ten telefon" />
-        <Row label="Etykieta położenia" value={<span>Brak ›</span>} divider={false} />
+        <Row label="Etykieta położenia" value="Brak ›" onClick={() => {}} divider={false} />
       </Card>
 
       <SectionLabel>Powiadomienia</SectionLabel>
@@ -281,7 +327,7 @@ function JaContent() {
           <span style={{ fontSize: 15, fontWeight: 500, color: C.text }}>Zezwalaj na prośby</span>
           <Toggle on={requests} onChange={() => setRequests(v => !v)} />
         </div>
-        <Row label="Dostosuj powiadomienia" accent value={<span style={{ color: C.planned }}>›</span>} divider={false} />
+        <Row label="Dostosuj powiadomienia" value="›" onClick={() => {}} divider={false} />
       </Card>
 
       <SectionLabel>Zaproszenie</SectionLabel>
@@ -290,7 +336,7 @@ function JaContent() {
           <div style={{ fontSize: 12, color: C.textTert, marginBottom: 4 }}>Twój kod</div>
           <div style={{ fontSize: 18, fontWeight: 700, color: C.text, letterSpacing: 0.5 }}>{me.invite_code}</div>
         </div>
-        <SmallButton variant="green">Kopiuj</SmallButton>
+        <SmallButton variant="green" onClick={copy}>{copied ? 'Skopiowano ✓' : 'Kopiuj'}</SmallButton>
       </Card>
 
       <div style={{ marginTop: 22 }}>
@@ -300,30 +346,19 @@ function JaContent() {
   );
 }
 
-// ── Round glass icon button ────────────────────────────────────
-function GlassIcon({ children, onClick, size = 44 }: { children: React.ReactNode; onClick?: () => void; size?: number }) {
-  return (
-    <button onClick={onClick} style={{
-      ...GLASS, width: size, height: size, borderRadius: size / 2, cursor: 'pointer',
-      display: 'flex', alignItems: 'center', justifyContent: 'center',
-      color: C.text, fontSize: 18, fontWeight: 700, fontFamily: FONT,
-      boxShadow: '0 6px 20px rgba(0,0,0,0.35)',
-    }}>{children}</button>
-  );
-}
-
 // ── Persistent map background ──────────────────────────────────
-function MapBackground({ active }: { active: Tab }) {
-  const withCoords = activities.filter(a => a.place);
+function MapBackground({ active, selected, onSelect, onRecenter }: {
+  active: Tab; selected: string | null; onSelect: (id: string | null) => void; onRecenter: () => void;
+}) {
   return (
     <div style={{ position: 'absolute', inset: 0, overflow: 'hidden' }}>
       {/* dark green map */}
-      <div style={{
+      <div onClick={() => onSelect(null)} style={{
         position: 'absolute', inset: 0,
         background: 'radial-gradient(120% 90% at 50% 25%, #2e4138 0%, #243029 55%, #18211c 100%)',
       }} />
       {/* faint roads */}
-      <svg style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', opacity: 0.5 }} preserveAspectRatio="none" viewBox="0 0 390 700">
+      <svg style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', opacity: 0.5, pointerEvents: 'none' }} preserveAspectRatio="none" viewBox="0 0 390 700">
         <g stroke="rgba(255,255,255,0.12)" strokeWidth="2" fill="none">
           <path d="M-20 180 Q120 220 200 120 T420 90" />
           <path d="M40 -20 Q90 200 60 400 T120 720" />
@@ -334,32 +369,37 @@ function MapBackground({ active }: { active: Tab }) {
       </svg>
 
       {/* my location dot */}
-      <div style={{ position: 'absolute', top: '32%', left: '46%' }}>
+      <div style={{ position: 'absolute', top: '32%', left: '46%', pointerEvents: 'none' }}>
         <div style={{ width: 22, height: 22, borderRadius: 11, background: '#0A84FF', border: '3px solid #fff', boxShadow: '0 0 0 6px rgba(10,132,255,0.25), 0 4px 12px rgba(0,0,0,0.4)' }} />
       </div>
 
-      {/* place pins (only on Osoby tab to keep map clean elsewhere) */}
-      {active === 'map' && withCoords.map((a, i) => {
-        const col = PLACE_TYPE_COLORS[a.place!.type] ?? C.accent;
-        const positions = [{ top: '20%', left: '32%' }, { top: '36%', left: '64%' }, { top: '26%', left: '50%' }];
+      {/* friend pins (people sharing location) */}
+      {active === 'map' && sharing.map((f, i) => {
+        const a = f.activity;
+        const col = a?.place ? (PLACE_TYPE_COLORS[a.place.type] ?? C.accent) : C.accent;
+        const isSel = selected === f.profile.id;
         return (
-          <div key={a.id} style={{ position: 'absolute', ...positions[i % 3], transform: 'translate(-50%,-100%)' }}>
+          <button
+            key={f.profile.id}
+            onClick={(e) => { e.stopPropagation(); onSelect(isSel ? null : f.profile.id); }}
+            style={{
+              position: 'absolute', ...PIN_POS[i % 3], transform: `translate(-50%,-100%) scale(${isSel ? 1.08 : 1})`,
+              transition: 'transform .15s', background: 'none', border: 'none', cursor: 'pointer', padding: 0,
+            }}
+          >
             <div style={{
-              ...GLASS, background: C.surfaceSolid, borderRadius: 999, padding: '5px 12px 5px 8px',
+              ...GLASS, background: isSel ? 'rgba(48,209,88,0.28)' : C.surfaceSolid,
+              border: `0.5px solid ${isSel ? col : C.border}`,
+              borderRadius: 999, padding: '5px 12px 5px 8px',
               display: 'flex', alignItems: 'center', gap: 7,
               boxShadow: '0 6px 18px rgba(0,0,0,0.4)', fontFamily: FONT,
             }}>
               <span style={{ width: 8, height: 8, borderRadius: 4, background: col }} />
-              <span style={{ fontSize: 13, fontWeight: 700, color: C.text }}>{a.profile.name.split(' ')[0]}</span>
+              <span style={{ fontSize: 13, fontWeight: 700, color: C.text }}>{f.profile.name.split(' ')[0]}</span>
             </div>
-          </div>
+          </button>
         );
       })}
-
-      {/* profile btn */}
-      <div style={{ position: 'absolute', top: 16, left: 16 }}>
-        <GlassIcon>{me.name[0]}</GlassIcon>
-      </div>
 
       {/* map controls stacked (like iOS) */}
       <div style={{
@@ -367,9 +407,9 @@ function MapBackground({ active }: { active: Tab }) {
         display: 'flex', flexDirection: 'column', overflow: 'hidden',
         boxShadow: '0 6px 20px rgba(0,0,0,0.35)',
       }}>
-        <button style={{ background: 'none', border: 'none', width: 44, height: 44, color: C.text, fontSize: 17, cursor: 'pointer' }}>⧉</button>
+        <button onClick={() => onSelect(null)} style={{ background: 'none', border: 'none', width: 44, height: 44, color: C.text, fontSize: 17, cursor: 'pointer' }}>⧉</button>
         <div style={{ height: 0.5, background: C.border }} />
-        <button style={{ background: 'none', border: 'none', width: 44, height: 44, color: C.accent, fontSize: 17, cursor: 'pointer' }}>➤</button>
+        <button onClick={onRecenter} style={{ background: 'none', border: 'none', width: 44, height: 44, color: C.accent, fontSize: 17, cursor: 'pointer' }}>➤</button>
       </div>
     </div>
   );
@@ -378,6 +418,9 @@ function MapBackground({ active }: { active: Tab }) {
 // ── Shell ──────────────────────────────────────────────────────
 export default function RundaApp() {
   const [active, setActive] = useState<Tab>('map');
+  const [selected, setSelected] = useState<string | null>(null);
+  const [joined, setJoined] = useState<Record<string, boolean>>({});
+  const [requests, setRequests] = useState<Profile[]>(pendingRequests);
 
   // Draggable bottom sheet — shared across all tabs
   const PEEK = 150;
@@ -414,6 +457,23 @@ export default function RundaApp() {
     setExpanded(true);
   };
 
+  // Tap a person → switch to map, focus pin, collapse sheet to reveal it.
+  const focusFriend = (id: string) => {
+    setActive('map');
+    setSelected(id);
+    setExpanded(false);
+  };
+
+  const toggleJoin = (id: string) => setJoined(j => ({ ...j, [id]: !j[id] }));
+  const acceptReq = (id: string) => setRequests(r => r.filter(x => x.id !== id));
+
+  const headerAction = (() => {
+    if (active === 'feed') return <GlassIcon size={38} onClick={() => {}}>+</GlassIcon>;
+    if (active === 'friends') return <SmallButton variant="green">Dodaj</SmallButton>;
+    if (active === 'profile') return <GlassIcon size={38} onClick={() => {}}>+</GlassIcon>;
+    return null;
+  })();
+
   return (
     <div style={{ minHeight: '100vh', background: '#000', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: FONT }}>
       <div style={{
@@ -423,7 +483,16 @@ export default function RundaApp() {
       }}>
         {/* persistent map */}
         <div style={{ position: 'absolute', inset: 0, paddingTop: 'env(safe-area-inset-top, 14px)' }}>
-          <MapBackground active={active} />
+          <MapBackground
+            active={active}
+            selected={selected}
+            onSelect={setSelected}
+            onRecenter={() => setSelected(null)}
+          />
+          {/* profile shortcut */}
+          <div style={{ position: 'absolute', top: 16, left: 16 }}>
+            <GlassIcon onClick={() => selectTab('profile')}>{me.name[0]}</GlassIcon>
+          </div>
         </div>
 
         {/* draggable glass bottom sheet */}
@@ -450,14 +519,14 @@ export default function RundaApp() {
             <div style={{ width: 38, height: 5, borderRadius: 3, background: 'rgba(255,255,255,0.22)', margin: '0 auto 14px' }} />
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <div style={{ fontSize: 28, fontWeight: 800, color: C.text, letterSpacing: -0.8 }}>{SHEET_TITLE[active]}</div>
-              {active === 'profile' && <GlassIcon size={38}>+</GlassIcon>}
+              {headerAction}
             </div>
           </div>
 
           <div style={{ flex: 1, overflowY: 'auto', padding: '8px 16px 24px' }} className="hide-scrollbar">
-            {active === 'map' && <OsobyContent />}
-            {active === 'feed' && <FeedContent />}
-            {active === 'friends' && <FriendsContent />}
+            {active === 'map' && <OsobyContent onFocus={focusFriend} onPlan={() => selectTab('feed')} />}
+            {active === 'feed' && <FeedContent joined={joined} onToggleJoin={toggleJoin} />}
+            {active === 'friends' && <FriendsContent requests={requests} onAccept={acceptReq} onReject={acceptReq} />}
             {active === 'profile' && <JaContent />}
           </div>
         </div>
