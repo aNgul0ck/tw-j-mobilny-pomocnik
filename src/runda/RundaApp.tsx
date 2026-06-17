@@ -4,8 +4,8 @@ import {
   PLACE_TYPE_COLORS, getInitials,
 } from './theme';
 import {
-  me, friends, activities, pendingRequests,
-  Activity, FriendWithStatus, Profile,
+  me, friends, activities, pendingRequests, contacts,
+  Activity, FriendWithStatus, Profile, Contact,
 } from './mock';
 
 const FONT = "'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif";
