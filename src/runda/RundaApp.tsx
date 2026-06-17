@@ -366,11 +366,11 @@ function JaContent() {
         <Row label="Dostosuj powiadomienia" value="›" onClick={() => {}} divider={false} />
       </Card>
 
-      <SectionLabel>Zaproszenie</SectionLabel>
+      <SectionLabel>Mój numer</SectionLabel>
       <Card style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: 16 }}>
         <div>
-          <div style={{ fontSize: 12, color: C.textTert, marginBottom: 4 }}>Twój kod</div>
-          <div style={{ fontSize: 18, fontWeight: 700, color: C.text, letterSpacing: 0.5 }}>{me.invite_code}</div>
+          <div style={{ fontSize: 12, color: C.textTert, marginBottom: 4 }}>Znajdą Cię po numerze</div>
+          <div style={{ fontSize: 18, fontWeight: 700, color: C.text, letterSpacing: 0.5 }}>{me.phone}</div>
         </div>
         <SmallButton variant="green" onClick={copy}>{copied ? 'Skopiowano ✓' : 'Kopiuj'}</SmallButton>
       </Card>
