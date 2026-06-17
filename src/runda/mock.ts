@@ -4,7 +4,7 @@ export interface Profile {
   id: string;
   name: string;
   username: string | null;
-  invite_code: string;
+  phone: string;
 }
 
 export interface Place {
