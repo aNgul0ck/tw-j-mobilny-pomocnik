@@ -1,6 +1,6 @@
+import { useEffect } from 'react';
 import { createFileRoute } from '@tanstack/react-router';
 import { AuthProvider, useAuth } from '@/findmy/lib/AuthContext';
-import { LoginView } from '@/findmy/components/LoginView';
 import FindMyApp from '@/findmy/App';
 
 export const Route = createFileRoute('/')({
