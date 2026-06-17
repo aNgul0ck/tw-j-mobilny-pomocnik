@@ -1,0 +1,38 @@
+export function distanceMeters(
+  lat1: number,
+  lon1: number,
+  lat2: number,
+  lon2: number,
+): number {
+  const R = 6371000;
+  const toRad = (d: number) => (d * Math.PI) / 180;
+  const dLat = toRad(lat2 - lat1);
+  const dLon = toRad(lon2 - lon1);
+  const a =
+    Math.sin(dLat / 2) ** 2 +
+    Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLon / 2) ** 2;
+  return 2 * R * Math.asin(Math.sqrt(a));
+}
+
+export interface Place {
+  id: string;
+  user_id: string;
+  name: string;
+  latitude: number;
+  longitude: number;
+  radius_m: number;
+  notify_friends: boolean;
+  created_at: string;
+}
+
+export interface Friend {
+  id: string; // friendship id
+  status: "pending" | "accepted";
+  direction: "incoming" | "outgoing";
+  profile: {
+    id: string;
+    display_name: string | null;
+    email: string | null;
+    avatar_url: string | null;
+  };
+}
