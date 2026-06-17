@@ -1,25 +1,27 @@
 // Runda design tokens — ported from the native app (src/lib/theme.ts)
 
 export const C = {
-  bg: '#F5F5F7',
-  surface: '#FFFFFF',
-  border: 'rgba(0,0,0,0.08)',
-  borderLight: 'rgba(0,0,0,0.06)',
-  text: '#1A1A1A',
-  textSec: 'rgba(0,0,0,0.45)',
-  textTert: 'rgba(0,0,0,0.28)',
-  accent: '#1E8A44',
-  accentLight: '#1E6A38',
-  accentBg: 'rgba(30,138,68,0.10)',
-  accentBorder: 'rgba(30,138,68,0.22)',
-  danger: '#FF3B30',
-  dangerBg: 'rgba(255,59,48,0.07)',
-  dangerBorder: 'rgba(255,59,48,0.20)',
-  soon: '#D97706',
-  soonBg: 'rgba(217,119,6,0.10)',
-  planned: '#2563EB',
-  plannedBg: 'rgba(37,99,235,0.10)',
+  bg: '#0E1512',
+  surface: 'rgba(40,44,46,0.62)',
+  surfaceSolid: 'rgba(24,27,28,0.85)',
+  border: 'rgba(255,255,255,0.12)',
+  borderLight: 'rgba(255,255,255,0.07)',
+  text: '#FFFFFF',
+  textSec: 'rgba(255,255,255,0.56)',
+  textTert: 'rgba(255,255,255,0.36)',
+  accent: '#30D158',
+  accentLight: '#34C759',
+  accentBg: 'rgba(48,209,88,0.16)',
+  accentBorder: 'rgba(48,209,88,0.34)',
+  danger: '#FF453A',
+  dangerBg: 'rgba(255,69,58,0.15)',
+  dangerBorder: 'rgba(255,69,58,0.30)',
+  soon: '#FF9F0A',
+  soonBg: 'rgba(255,159,10,0.16)',
+  planned: '#0A84FF',
+  plannedBg: 'rgba(10,132,255,0.16)',
 };
+
 
 export type PlaceType =
   | 'bar' | 'cafe' | 'park' | 'playground'
