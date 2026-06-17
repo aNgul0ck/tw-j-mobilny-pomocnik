@@ -1,6 +1,6 @@
+import { useEffect } from 'react';
 import { createFileRoute } from '@tanstack/react-router';
 import { AuthProvider, useAuth } from '@/findmy/lib/AuthContext';
-import { LoginView } from '@/findmy/components/LoginView';
 import FindMyApp from '@/findmy/App';
 
 export const Route = createFileRoute('/')({
@@ -18,18 +18,21 @@ export const Route = createFileRoute('/')({
 });
 
 function Gate() {
-  const { user, userProfile, loading } = useAuth();
+  const { userProfile, loading, loginWithEmail } = useAuth();
 
-  if (loading) {
+  // Tymczasowo bez logowania — automatyczne wejście jako admin
+  useEffect(() => {
+    if (!loading && !userProfile) {
+      loginWithEmail('antek.golik@gmail.com', '');
+    }
+  }, [loading, userProfile, loginWithEmail]);
+
+  if (loading || !userProfile) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-[#F5F5F7] text-[#86868b] font-sans">
         Wczytywanie...
       </div>
     );
-  }
-
-  if (!user || !userProfile) {
-    return <LoginView />;
   }
 
   return <FindMyApp />;
