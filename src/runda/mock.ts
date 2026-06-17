@@ -114,3 +114,18 @@ export const friends: FriendWithStatus[] = [
 ];
 
 export const pendingRequests: Profile[] = [p('u-anna', 'Anna Mazur')];
+
+// Phone contacts you can start sharing location with.
+export interface Contact {
+  name: string;
+  phone: string;
+  onApp: boolean; // already uses Runda
+}
+
+export const contacts: Contact[] = [
+  { name: 'Tomek Wójcik', phone: '+48 608 111 222', onApp: true },
+  { name: 'Kasia Krawczyk', phone: '+48 609 222 333', onApp: true },
+  { name: 'Bartek Szymański', phone: '+48 610 333 444', onApp: false },
+  { name: 'Ewa Jankowska', phone: '+48 611 444 555', onApp: false },
+  { name: 'Mama', phone: '+48 612 555 666', onApp: true },
+];
