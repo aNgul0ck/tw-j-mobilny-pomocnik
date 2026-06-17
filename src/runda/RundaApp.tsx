@@ -430,7 +430,7 @@ export default function RundaApp() {
         <div
           ref={sheetRef}
           style={{
-            position: 'absolute', left: 0, right: 0, bottom: 0, top: 90,
+            position: 'absolute', left: 0, right: 0, bottom: 86, top: 90,
             ...GLASS, background: C.surfaceSolid, backdropFilter: 'blur(34px) saturate(180%)',
             WebkitBackdropFilter: 'blur(34px) saturate(180%)',
             borderTopLeftRadius: 30, borderTopRightRadius: 30, borderBottom: 'none',
