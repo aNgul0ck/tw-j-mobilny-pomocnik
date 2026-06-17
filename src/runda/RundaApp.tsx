@@ -1,7 +1,7 @@
 import { useState, useRef, useLayoutEffect } from 'react';
 import {
   C, ACTIVITY_TYPE_LABELS, ACTIVITY_TYPE_ICONS, ACTIVITY_TYPE_COLORS,
-  PLACE_TYPE_COLORS, getInitials,
+  PLACE_TYPE_COLORS, getInitials, avatarColor,
 } from './theme';
 import {
   me, friends, activities, pendingRequests, contacts,
