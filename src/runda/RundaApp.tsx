@@ -454,7 +454,7 @@ export default function RundaApp() {
             </div>
           </div>
 
-          <div style={{ flex: 1, overflowY: 'auto', padding: '8px 16px 120px' }} className="hide-scrollbar">
+          <div style={{ flex: 1, overflowY: 'auto', padding: '8px 16px 24px' }} className="hide-scrollbar">
             {active === 'map' && <OsobyContent />}
             {active === 'feed' && <FeedContent />}
             {active === 'friends' && <FriendsContent />}
