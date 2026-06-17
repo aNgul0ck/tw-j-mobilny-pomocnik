@@ -48,11 +48,21 @@ export const me: Profile = {
   id: 'me-antek',
   name: 'Antek Golik',
   username: 'antek',
-  invite_code: 'RUNDA-A7K3',
+  phone: '+48 600 100 200',
+};
+
+const PHONES: Record<string, string> = {
+  'u-kuba': '+48 601 234 567',
+  'u-ola': '+48 602 345 678',
+  'u-michal': '+48 603 456 789',
+  'u-zosia': '+48 604 567 890',
+  'u-piotr': '+48 605 678 901',
+  'u-marta': '+48 606 789 012',
+  'u-anna': '+48 607 890 123',
 };
 
 const p = (id: string, name: string): Profile => ({
-  id, name, username: name.split(' ')[0].toLowerCase(), invite_code: 'RUNDA-' + id.slice(0, 4).toUpperCase(),
+  id, name, username: name.split(' ')[0].toLowerCase(), phone: PHONES[id] ?? '+48 600 000 000',
 });
 
 const kuba = p('u-kuba', 'Kuba Nowak');
