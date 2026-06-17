@@ -160,31 +160,77 @@ function FeedTab() {
 
 function MapTab() {
   const withCoords = activities.filter(a => a.place);
+  const [selected, setSelected] = useState<Activity | null>(null);
+
+  // Draggable bottom sheet ---------------------------------------
+  const PEEK = 200;            // visible height when collapsed
+  const sheetRef = useRef<HTMLDivElement>(null);
+  const [sheetH, setSheetH] = useState(420);
+  const [expanded, setExpanded] = useState(false);
+  const [drag, setDrag] = useState<{ startY: number; baseT: number; t: number } | null>(null);
+
+  useLayoutEffect(() => {
+    if (sheetRef.current) setSheetH(sheetRef.current.offsetHeight);
+  }, []);
+
+  const collapsedT = Math.max(0, sheetH - PEEK);
+  const baseT = expanded ? 0 : collapsedT;
+  const translate = drag ? drag.t : baseT;
+
+  const onPointerDown = (e: React.PointerEvent) => {
+    (e.target as HTMLElement).setPointerCapture?.(e.pointerId);
+    setDrag({ startY: e.clientY, baseT, t: baseT });
+  };
+  const onPointerMove = (e: React.PointerEvent) => {
+    if (!drag) return;
+    const next = Math.min(collapsedT, Math.max(0, drag.baseT + (e.clientY - drag.startY)));
+    setDrag({ ...drag, t: next });
+  };
+  const onPointerUp = () => {
+    if (!drag) return;
+    setExpanded(drag.t < collapsedT / 2);
+    setDrag(null);
+  };
+
   return (
     <div style={{ height: '100%', position: 'relative', overflow: 'hidden' }}>
       {/* faux map */}
-      <div style={{
-        position: 'absolute', inset: 0,
-        background: 'linear-gradient(135deg,#E8ECE9 0%,#E2E8E4 40%,#E6EAE7 100%)',
-        backgroundImage:
-          'linear-gradient(rgba(0,0,0,0.035) 1px,transparent 1px),linear-gradient(90deg,rgba(0,0,0,0.035) 1px,transparent 1px)',
-        backgroundSize: '44px 44px',
-      }} />
+      <div
+        onClick={() => setSelected(null)}
+        style={{
+          position: 'absolute', inset: 0,
+          background: 'linear-gradient(135deg,#E8ECE9 0%,#E2E8E4 40%,#E6EAE7 100%)',
+          backgroundImage:
+            'linear-gradient(rgba(0,0,0,0.035) 1px,transparent 1px),linear-gradient(90deg,rgba(0,0,0,0.035) 1px,transparent 1px)',
+          backgroundSize: '44px 44px',
+        }}
+      />
       {/* place pins */}
       {withCoords.map((a, i) => {
         const col = PLACE_TYPE_COLORS[a.place!.type] ?? C.accent;
         const positions = [{ top: '22%', left: '30%' }, { top: '46%', left: '62%' }, { top: '64%', left: '38%' }];
+        const isSel = selected?.id === a.id;
         return (
-          <div key={a.id} style={{ position: 'absolute', ...positions[i % 3], transform: 'translate(-50%,-100%)' }}>
+          <button
+            key={a.id}
+            onClick={() => setSelected(a)}
+            style={{
+              position: 'absolute', ...positions[i % 3], transform: 'translate(-50%,-100%)',
+              background: 'none', border: 'none', cursor: 'pointer', padding: 0,
+            }}
+          >
             <div style={{
               background: '#fff', borderRadius: 14, padding: '5px 10px 5px 7px',
-              display: 'flex', alignItems: 'center', gap: 6, border: `1.5px solid ${col}60`,
-              boxShadow: '0 6px 16px rgba(0,0,0,0.14)',
+              display: 'flex', alignItems: 'center', gap: 6,
+              border: `1.5px solid ${isSel ? col : col + '60'}`,
+              boxShadow: isSel ? `0 8px 22px ${col}55` : '0 6px 16px rgba(0,0,0,0.14)',
+              transform: isSel ? 'scale(1.08)' : 'scale(1)', transition: 'transform .15s',
+              fontFamily: FONT,
             }}>
               <span style={{ width: 8, height: 8, borderRadius: 4, background: col }} />
               <span style={{ fontSize: 12.5, fontWeight: 700, color: C.text }}>{a.profile.name.split(' ')[0]}</span>
             </div>
-          </div>
+          </button>
         );
       })}
 
@@ -205,30 +251,65 @@ function MapTab() {
         <span style={{ fontSize: 12.5, fontWeight: 600, color: C.text }}>{withCoords.length} osób w pobliżu</span>
       </div>
 
-      {/* bottom sheet */}
-      <div style={{
-        position: 'absolute', left: 0, right: 0, bottom: 0,
-        background: '#fff', borderTopLeftRadius: 26, borderTopRightRadius: 26,
-        padding: '12px 16px 110px', boxShadow: '0 -8px 24px rgba(0,0,0,0.08)',
-      }}>
-        <div style={{ width: 38, height: 5, borderRadius: 3, background: 'rgba(0,0,0,0.12)', margin: '0 auto 14px' }} />
-        <div style={{ display: 'flex', gap: 16, overflowX: 'auto', paddingBottom: 14 }} className="hide-scrollbar">
-          {friends.map(f => (
-            <div key={f.profile.id} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6, width: 50 }}>
-              <Avatar initials={f.initials} color={f.color} size={40} online={f.online} />
-              <span style={{ fontSize: 11, color: C.textSec, maxWidth: 50, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{f.profile.name.split(' ')[0]}</span>
-            </div>
-          ))}
+      {/* selected pin detail card */}
+      {selected && (
+        <div style={{ position: 'absolute', left: 16, right: 16, bottom: PEEK + 28, zIndex: 5 }}>
+          <ActivityCard activity={selected} />
         </div>
-        <button style={{
-          width: '100%', padding: '15px', borderRadius: 15, border: 'none',
-          background: C.text, color: '#fff', fontWeight: 700, fontSize: 15,
-          cursor: 'pointer', fontFamily: FONT,
-        }}>Zaplanuj spotkanie</button>
+      )}
+
+      {/* draggable bottom sheet */}
+      <div
+        ref={sheetRef}
+        style={{
+          position: 'absolute', left: 0, right: 0, bottom: 0,
+          background: '#fff', borderTopLeftRadius: 26, borderTopRightRadius: 26,
+          boxShadow: '0 -8px 24px rgba(0,0,0,0.08)',
+          transform: `translateY(${translate}px)`,
+          transition: drag ? 'none' : 'transform .32s cubic-bezier(.32,.72,0,1)',
+          touchAction: 'none',
+        }}
+      >
+        {/* drag handle area */}
+        <div
+          onPointerDown={onPointerDown}
+          onPointerMove={onPointerMove}
+          onPointerUp={onPointerUp}
+          onClick={() => setExpanded(v => !v)}
+          style={{ padding: '12px 16px 6px', cursor: 'grab', touchAction: 'none' }}
+        >
+          <div style={{ width: 38, height: 5, borderRadius: 3, background: 'rgba(0,0,0,0.14)', margin: '0 auto' }} />
+          <div style={{ textAlign: 'center', fontSize: 12, fontWeight: 600, color: C.textTert, marginTop: 8 }}>
+            {expanded ? 'Przeciągnij w dół, aby zamknąć' : `Znajomi w pobliżu · ${friends.length}`}
+          </div>
+        </div>
+
+        <div style={{ padding: '6px 16px 110px' }}>
+          <div style={{ display: 'flex', gap: 16, overflowX: 'auto', paddingBottom: 14 }} className="hide-scrollbar">
+            {friends.map(f => (
+              <div key={f.profile.id} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6, width: 50, flexShrink: 0 }}>
+                <Avatar initials={f.initials} color={f.color} size={40} online={f.online} />
+                <span style={{ fontSize: 11, color: C.textSec, maxWidth: 50, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{f.profile.name.split(' ')[0]}</span>
+              </div>
+            ))}
+          </div>
+
+          {/* expanded content: full friend list */}
+          <div style={{ marginBottom: 14 }}>
+            {friends.map((f, i) => <FriendRow key={f.profile.id} f={f} last={i === friends.length - 1} />)}
+          </div>
+
+          <button style={{
+            width: '100%', padding: '15px', borderRadius: 15, border: 'none',
+            background: C.text, color: '#fff', fontWeight: 700, fontSize: 15,
+            cursor: 'pointer', fontFamily: FONT,
+          }}>Zaplanuj spotkanie</button>
+        </div>
       </div>
     </div>
   );
 }
+
 
 function FriendRow({ f, last }: { f: FriendWithStatus; last?: boolean }) {
   const a = f.activity;
