@@ -336,7 +336,7 @@ function JaContent() {
   const [copied, setCopied] = useState(false);
 
   const copy = () => {
-    navigator.clipboard?.writeText(me.invite_code).catch(() => {});
+    navigator.clipboard?.writeText(me.phone).catch(() => {});
     setCopied(true);
     setTimeout(() => setCopied(false), 1600);
   };
