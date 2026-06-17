@@ -246,48 +246,84 @@ function FeedContent({ joined, onToggleJoin }: { joined: Record<string, boolean>
   );
 }
 
-// ── Tab content: Znajomi (management) ──────────────────────────
+// ── Tab content: Znajomi (location sharing via contacts) ───────
 function FriendsContent({ requests, onAccept, onReject }: {
   requests: Profile[]; onAccept: (id: string) => void; onReject: (id: string) => void;
 }) {
+  // Who I currently share my location with (start with online friends).
+  const [shareWith, setShareWith] = useState<Record<string, boolean>>(
+    () => Object.fromEntries(friends.map(f => [f.profile.id, f.online])),
+  );
+  const [shared, setShared] = useState<Record<string, boolean>>({});
+
   return (
     <>
       {requests.length > 0 && (
         <>
-          <SectionLabel>Zaproszenia · {requests.length}</SectionLabel>
+          <SectionLabel>Udostępnia Ci położenie · {requests.length}</SectionLabel>
           <Card>
             {requests.map((req, i) => (
               <div key={req.id} style={{ display: 'flex', alignItems: 'center', gap: 13, padding: '13px 16px', borderBottom: i === requests.length - 1 ? 'none' : `0.5px solid ${C.borderLight}` }}>
                 <Avatar initials={getInitials(req.name)} color={ACTIVITY_TYPE_COLORS.galeria} size={42} />
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div style={{ fontSize: 15, fontWeight: 600, color: C.text }}>{req.name}</div>
-                  <div style={{ fontSize: 12.5, color: C.textTert }}>Zaprasza do znajomych</div>
+                  <div style={{ fontSize: 12.5, color: C.textTert }}>{req.phone}</div>
                 </div>
-                <SmallButton variant="green" onClick={() => onAccept(req.id)}>Akceptuj</SmallButton>
-                <SmallButton variant="danger" onClick={() => onReject(req.id)}>Odrzuć</SmallButton>
+                <SmallButton variant="green" onClick={() => onAccept(req.id)}>Odwzajemnij</SmallButton>
+                <SmallButton variant="danger" onClick={() => onReject(req.id)}>Ukryj</SmallButton>
               </div>
             ))}
           </Card>
         </>
       )}
 
-      <SectionLabel>Wszyscy znajomi · {friends.length}</SectionLabel>
+      <SectionLabel>Udostępniasz położenie · {Object.values(shareWith).filter(Boolean).length}</SectionLabel>
       <Card>
-        {friends.map((f, i) => (
-          <div key={f.profile.id} style={{
-            display: 'flex', alignItems: 'center', gap: 13, padding: '13px 16px',
-            borderBottom: i === friends.length - 1 ? 'none' : `0.5px solid ${C.borderLight}`,
-          }}>
-            <Avatar initials={f.initials} color={f.color} size={42} online={f.online} />
-            <div style={{ flex: 1, minWidth: 0 }}>
-              <div style={{ fontSize: 15, fontWeight: 600, color: C.text }}>{f.profile.name}</div>
-              <div style={{ fontSize: 12.5, color: f.online ? C.accentLight : C.textTert, marginTop: 2 }}>
-                {f.online ? 'Udostępnia położenie' : 'Offline'}
+        {friends.map((f, i) => {
+          const on = !!shareWith[f.profile.id];
+          return (
+            <div key={f.profile.id} style={{
+              display: 'flex', alignItems: 'center', gap: 13, padding: '13px 16px',
+              borderBottom: i === friends.length - 1 ? 'none' : `0.5px solid ${C.borderLight}`,
+            }}>
+              <Avatar initials={f.initials} color={f.color} size={42} online={f.online} />
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ fontSize: 15, fontWeight: 600, color: C.text }}>{f.profile.name}</div>
+                <div style={{ fontSize: 12.5, color: f.online ? C.accentLight : C.textTert, marginTop: 2 }}>
+                  {f.online ? 'Udostępnia Ci położenie' : 'Nie udostępnia'}
+                </div>
               </div>
+              <Toggle on={on} onChange={() => setShareWith(s => ({ ...s, [f.profile.id]: !s[f.profile.id] }))} />
             </div>
-            <span style={{ fontSize: 18, color: C.textTert }}>›</span>
-          </div>
-        ))}
+          );
+        })}
+      </Card>
+
+      <SectionLabel>Z kontaktów</SectionLabel>
+      <Card>
+        {contacts.map((c, i) => {
+          const isShared = !!shared[c.phone];
+          return (
+            <div key={c.phone} style={{
+              display: 'flex', alignItems: 'center', gap: 13, padding: '13px 16px',
+              borderBottom: i === contacts.length - 1 ? 'none' : `0.5px solid ${C.borderLight}`,
+            }}>
+              <Avatar initials={getInitials(c.name)} color={avatarColor(c.phone)} size={42} />
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ fontSize: 15, fontWeight: 600, color: C.text }}>{c.name}</div>
+                <div style={{ fontSize: 12.5, color: C.textTert, marginTop: 2 }}>
+                  {c.phone}{c.onApp ? ' · jest w Runda' : ' · zaproś'}
+                </div>
+              </div>
+              <SmallButton
+                variant={isShared ? 'plain' : 'green'}
+                onClick={() => setShared(s => ({ ...s, [c.phone]: !s[c.phone] }))}
+              >
+                {isShared ? 'Udostępniasz ✓' : c.onApp ? 'Udostępnij' : 'Zaproś'}
+              </SmallButton>
+            </div>
+          );
+        })}
       </Card>
     </>
   );
