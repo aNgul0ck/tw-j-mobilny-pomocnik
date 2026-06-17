@@ -76,7 +76,7 @@ export function UsersView() {
       if (!userObj) return;
       
       const newProfileIds = userObj.profileIds.includes(profileId) 
-        ? userObj.profileIds.filter(id => id !== profileId) 
+        ? userObj.profileIds.filter((id: string) => id !== profileId) 
         : [...userObj.profileIds, profileId];
         
       await dbService.updateUser(userEmail, { profileIds: newProfileIds });
