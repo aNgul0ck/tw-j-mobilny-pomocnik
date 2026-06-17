@@ -4,7 +4,7 @@ export interface Profile {
   id: string;
   name: string;
   username: string | null;
-  invite_code: string;
+  phone: string;
 }
 
 export interface Place {
@@ -48,11 +48,21 @@ export const me: Profile = {
   id: 'me-antek',
   name: 'Antek Golik',
   username: 'antek',
-  invite_code: 'RUNDA-A7K3',
+  phone: '+48 600 100 200',
+};
+
+const PHONES: Record<string, string> = {
+  'u-kuba': '+48 601 234 567',
+  'u-ola': '+48 602 345 678',
+  'u-michal': '+48 603 456 789',
+  'u-zosia': '+48 604 567 890',
+  'u-piotr': '+48 605 678 901',
+  'u-marta': '+48 606 789 012',
+  'u-anna': '+48 607 890 123',
 };
 
 const p = (id: string, name: string): Profile => ({
-  id, name, username: name.split(' ')[0].toLowerCase(), invite_code: 'RUNDA-' + id.slice(0, 4).toUpperCase(),
+  id, name, username: name.split(' ')[0].toLowerCase(), phone: PHONES[id] ?? '+48 600 000 000',
 });
 
 const kuba = p('u-kuba', 'Kuba Nowak');
@@ -104,3 +114,18 @@ export const friends: FriendWithStatus[] = [
 ];
 
 export const pendingRequests: Profile[] = [p('u-anna', 'Anna Mazur')];
+
+// Phone contacts you can start sharing location with.
+export interface Contact {
+  name: string;
+  phone: string;
+  onApp: boolean; // already uses Runda
+}
+
+export const contacts: Contact[] = [
+  { name: 'Tomek Wójcik', phone: '+48 608 111 222', onApp: true },
+  { name: 'Kasia Krawczyk', phone: '+48 609 222 333', onApp: true },
+  { name: 'Bartek Szymański', phone: '+48 610 333 444', onApp: false },
+  { name: 'Ewa Jankowska', phone: '+48 611 444 555', onApp: false },
+  { name: 'Mama', phone: '+48 612 555 666', onApp: true },
+];

@@ -1,11 +1,11 @@
 import { useState, useRef, useLayoutEffect } from 'react';
 import {
   C, ACTIVITY_TYPE_LABELS, ACTIVITY_TYPE_ICONS, ACTIVITY_TYPE_COLORS,
-  PLACE_TYPE_COLORS, getInitials,
+  PLACE_TYPE_COLORS, getInitials, avatarColor,
 } from './theme';
 import {
-  me, friends, activities, pendingRequests,
-  Activity, FriendWithStatus, Profile,
+  me, friends, activities, pendingRequests, contacts,
+  Activity, FriendWithStatus, Profile, Contact,
 } from './mock';
 
 const FONT = "'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif";
@@ -246,48 +246,84 @@ function FeedContent({ joined, onToggleJoin }: { joined: Record<string, boolean>
   );
 }
 
-// ── Tab content: Znajomi (management) ──────────────────────────
+// ── Tab content: Znajomi (location sharing via contacts) ───────
 function FriendsContent({ requests, onAccept, onReject }: {
   requests: Profile[]; onAccept: (id: string) => void; onReject: (id: string) => void;
 }) {
+  // Who I currently share my location with (start with online friends).
+  const [shareWith, setShareWith] = useState<Record<string, boolean>>(
+    () => Object.fromEntries(friends.map(f => [f.profile.id, f.online])),
+  );
+  const [shared, setShared] = useState<Record<string, boolean>>({});
+
   return (
     <>
       {requests.length > 0 && (
         <>
-          <SectionLabel>Zaproszenia · {requests.length}</SectionLabel>
+          <SectionLabel>Udostępnia Ci położenie · {requests.length}</SectionLabel>
           <Card>
             {requests.map((req, i) => (
               <div key={req.id} style={{ display: 'flex', alignItems: 'center', gap: 13, padding: '13px 16px', borderBottom: i === requests.length - 1 ? 'none' : `0.5px solid ${C.borderLight}` }}>
                 <Avatar initials={getInitials(req.name)} color={ACTIVITY_TYPE_COLORS.galeria} size={42} />
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div style={{ fontSize: 15, fontWeight: 600, color: C.text }}>{req.name}</div>
-                  <div style={{ fontSize: 12.5, color: C.textTert }}>Zaprasza do znajomych</div>
+                  <div style={{ fontSize: 12.5, color: C.textTert }}>{req.phone}</div>
                 </div>
-                <SmallButton variant="green" onClick={() => onAccept(req.id)}>Akceptuj</SmallButton>
-                <SmallButton variant="danger" onClick={() => onReject(req.id)}>Odrzuć</SmallButton>
+                <SmallButton variant="green" onClick={() => onAccept(req.id)}>Odwzajemnij</SmallButton>
+                <SmallButton variant="danger" onClick={() => onReject(req.id)}>Ukryj</SmallButton>
               </div>
             ))}
           </Card>
         </>
       )}
 
-      <SectionLabel>Wszyscy znajomi · {friends.length}</SectionLabel>
+      <SectionLabel>Udostępniasz położenie · {Object.values(shareWith).filter(Boolean).length}</SectionLabel>
       <Card>
-        {friends.map((f, i) => (
-          <div key={f.profile.id} style={{
-            display: 'flex', alignItems: 'center', gap: 13, padding: '13px 16px',
-            borderBottom: i === friends.length - 1 ? 'none' : `0.5px solid ${C.borderLight}`,
-          }}>
-            <Avatar initials={f.initials} color={f.color} size={42} online={f.online} />
-            <div style={{ flex: 1, minWidth: 0 }}>
-              <div style={{ fontSize: 15, fontWeight: 600, color: C.text }}>{f.profile.name}</div>
-              <div style={{ fontSize: 12.5, color: f.online ? C.accentLight : C.textTert, marginTop: 2 }}>
-                {f.online ? 'Udostępnia położenie' : 'Offline'}
+        {friends.map((f, i) => {
+          const on = !!shareWith[f.profile.id];
+          return (
+            <div key={f.profile.id} style={{
+              display: 'flex', alignItems: 'center', gap: 13, padding: '13px 16px',
+              borderBottom: i === friends.length - 1 ? 'none' : `0.5px solid ${C.borderLight}`,
+            }}>
+              <Avatar initials={f.initials} color={f.color} size={42} online={f.online} />
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ fontSize: 15, fontWeight: 600, color: C.text }}>{f.profile.name}</div>
+                <div style={{ fontSize: 12.5, color: f.online ? C.accentLight : C.textTert, marginTop: 2 }}>
+                  {f.online ? 'Udostępnia Ci położenie' : 'Nie udostępnia'}
+                </div>
               </div>
+              <Toggle on={on} onChange={() => setShareWith(s => ({ ...s, [f.profile.id]: !s[f.profile.id] }))} />
             </div>
-            <span style={{ fontSize: 18, color: C.textTert }}>›</span>
-          </div>
-        ))}
+          );
+        })}
+      </Card>
+
+      <SectionLabel>Z kontaktów</SectionLabel>
+      <Card>
+        {contacts.map((c, i) => {
+          const isShared = !!shared[c.phone];
+          return (
+            <div key={c.phone} style={{
+              display: 'flex', alignItems: 'center', gap: 13, padding: '13px 16px',
+              borderBottom: i === contacts.length - 1 ? 'none' : `0.5px solid ${C.borderLight}`,
+            }}>
+              <Avatar initials={getInitials(c.name)} color={avatarColor(c.phone)} size={42} />
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ fontSize: 15, fontWeight: 600, color: C.text }}>{c.name}</div>
+                <div style={{ fontSize: 12.5, color: C.textTert, marginTop: 2 }}>
+                  {c.phone}{c.onApp ? ' · jest w Runda' : ' · zaproś'}
+                </div>
+              </div>
+              <SmallButton
+                variant={isShared ? 'plain' : 'green'}
+                onClick={() => setShared(s => ({ ...s, [c.phone]: !s[c.phone] }))}
+              >
+                {isShared ? 'Udostępniasz ✓' : c.onApp ? 'Udostępnij' : 'Zaproś'}
+              </SmallButton>
+            </div>
+          );
+        })}
       </Card>
     </>
   );
@@ -300,7 +336,7 @@ function JaContent() {
   const [copied, setCopied] = useState(false);
 
   const copy = () => {
-    navigator.clipboard?.writeText(me.invite_code).catch(() => {});
+    navigator.clipboard?.writeText(me.phone).catch(() => {});
     setCopied(true);
     setTimeout(() => setCopied(false), 1600);
   };
@@ -330,11 +366,11 @@ function JaContent() {
         <Row label="Dostosuj powiadomienia" value="›" onClick={() => {}} divider={false} />
       </Card>
 
-      <SectionLabel>Zaproszenie</SectionLabel>
+      <SectionLabel>Mój numer</SectionLabel>
       <Card style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: 16 }}>
         <div>
-          <div style={{ fontSize: 12, color: C.textTert, marginBottom: 4 }}>Twój kod</div>
-          <div style={{ fontSize: 18, fontWeight: 700, color: C.text, letterSpacing: 0.5 }}>{me.invite_code}</div>
+          <div style={{ fontSize: 12, color: C.textTert, marginBottom: 4 }}>Znajdą Cię po numerze</div>
+          <div style={{ fontSize: 18, fontWeight: 700, color: C.text, letterSpacing: 0.5 }}>{me.phone}</div>
         </div>
         <SmallButton variant="green" onClick={copy}>{copied ? 'Skopiowano ✓' : 'Kopiuj'}</SmallButton>
       </Card>
