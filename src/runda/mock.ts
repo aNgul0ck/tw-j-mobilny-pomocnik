@@ -98,17 +98,28 @@ export const activities: Activity[] = [
     message: 'Mam wolną godzinę, ktoś chętny?', timing: 'now', created_at: ago(8),
     profile: kuba, place: places[0],
     joins: [{ id: 'j1', user_id: ola.id, eta_minutes: 10, profile: ola }],
+    likes: 4,
+    comments: [
+      { id: 'c1', profile: ola, text: 'Będę za 10 min!', created_at: ago(6) },
+      { id: 'c2', profile: marta, text: 'Może następnym razem ☕', created_at: ago(4) },
+    ],
   },
   {
     id: 'a2', user_id: michal.id, activity_type: 'siłownia', custom_place: null,
     message: null, timing: 'soon', created_at: ago(20),
     profile: michal, place: places[2], joins: [],
+    likes: 1,
+    comments: [],
   },
   {
     id: 'a3', user_id: zosia.id, activity_type: 'spacer', custom_place: null,
     message: 'Pogoda super, idę na rundkę 🌿', timing: 'now', created_at: ago(35),
     profile: zosia, place: places[1], joins: [
       { id: 'j2', user_id: marta.id, eta_minutes: null, profile: marta },
+    ],
+    likes: 7,
+    comments: [
+      { id: 'c3', profile: piotr, text: 'Zazdroszczę pogody!', created_at: ago(30) },
     ],
   },
 ];
