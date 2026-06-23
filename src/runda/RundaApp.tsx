@@ -160,7 +160,10 @@ function ActivityCard({ activity, mine, joined, onToggleJoin }: {
             <span style={{ fontWeight: 700, fontSize: 16, color: C.text }}>
               {mine ? 'Ty' : activity.profile.name}
             </span>
-            <span style={{ fontSize: 11, fontWeight: 600, color: timingMap.c, background: timingMap.bg, padding: '3px 9px', borderRadius: 999 }}>{timingMap.t}</span>
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5, fontSize: 11, fontWeight: 600, color: timingMap.c, background: timingMap.bg, padding: '3px 9px', borderRadius: 999 }}>
+              {timingMap.dot && <span style={{ width: 6, height: 6, borderRadius: 3, background: C.online }} />}
+              {timingMap.t}
+            </span>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginTop: 4 }}>
             <span style={{ fontWeight: 600, fontSize: 14, color: C.textSec }}>{label}</span>
