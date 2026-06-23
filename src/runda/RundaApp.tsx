@@ -663,6 +663,39 @@ export default function RundaApp() {
           </div>
         </div>
 
+        {/* tapped a person on the map → detail + interactions card */}
+        {active === 'map' && selectedFriend && !expanded && (
+          <div style={{
+            position: 'absolute', left: 14, right: 14, bottom: 86, zIndex: 9,
+            animation: 'rundaSlideUp .26s cubic-bezier(.32,.72,0,1)',
+          }}>
+            <Card style={{ padding: 16, position: 'relative', boxShadow: '0 -10px 40px rgba(0,0,0,0.6)' }}>
+              <button onClick={() => setSelected(null)} style={{
+                position: 'absolute', top: 12, right: 12, background: 'rgba(255,255,255,0.08)',
+                border: 'none', borderRadius: 999, width: 30, height: 30, cursor: 'pointer',
+                display: 'flex', alignItems: 'center', justifyContent: 'center', color: C.textSec,
+              }}><X size={16} strokeWidth={2.2} /></button>
+              {selectedFriend.activity ? (
+                <ActivityPost
+                  activity={selectedFriend.activity}
+                  joined={!!joined[selectedFriend.activity.id]}
+                  onToggleJoin={() => toggleJoin(selectedFriend.activity!.id)}
+                  interactions={interactions}
+                />
+              ) : (
+                <div style={{ display: 'flex', alignItems: 'center', gap: 13 }}>
+                  <Avatar initials={selectedFriend.initials} color={selectedFriend.color} size={46} online={selectedFriend.online} />
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontSize: 16, fontWeight: 700, color: C.text }}>{selectedFriend.profile.name}</div>
+                    <div style={{ fontSize: 13, color: C.textTert, marginTop: 2 }}>Udostępnia położenie · w pobliżu</div>
+                  </div>
+                </div>
+              )}
+            </Card>
+          </div>
+        )}
+
+
         {/* draggable glass bottom sheet */}
         <div
           ref={sheetRef}
