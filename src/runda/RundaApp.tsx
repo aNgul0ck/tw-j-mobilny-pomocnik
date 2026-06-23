@@ -634,6 +634,7 @@ export default function RundaApp() {
 
   const toggleJoin = (id: string) => setJoined(j => ({ ...j, [id]: !j[id] }));
   const acceptReq = (id: string) => setRequests(r => r.filter(x => x.id !== id));
+  const selectedFriend = selected ? friends.find(f => f.profile.id === selected) ?? null : null;
 
   const headerAction = (() => {
     if (active === 'feed') return <GlassIcon size={38} onClick={() => {}}><Plus size={18} strokeWidth={2.2} color={C.text} /></GlassIcon>;
