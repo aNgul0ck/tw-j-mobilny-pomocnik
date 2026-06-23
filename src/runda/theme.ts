@@ -82,18 +82,18 @@ export const ACTIVITY_TYPE_ICONS: Record<ActivityType, string> = {
   inne: '·',
 };
 
-// Someone's activity is the one element allowed to carry color (green).
+// Monochrome — green is reserved exclusively for the live "online" dot.
 export const ACTIVITY_TYPE_COLORS: Record<ActivityType, string> = {
-  kawa: '#30D158',
-  spacer: '#30D158',
-  siłownia: '#30D158',
-  plac_zabaw: '#30D158',
-  galeria: '#30D158',
-  coworking: '#30D158',
-  rower: '#30D158',
-  zakupy: '#30D158',
-  wydarzenie: '#30D158',
-  inne: '#30D158',
+  kawa: '#FFFFFF',
+  spacer: '#FFFFFF',
+  siłownia: '#FFFFFF',
+  plac_zabaw: '#FFFFFF',
+  galeria: '#FFFFFF',
+  coworking: '#FFFFFF',
+  rower: '#FFFFFF',
+  zakupy: '#FFFFFF',
+  wydarzenie: '#FFFFFF',
+  inne: '#FFFFFF',
 };
 
 export const PLACE_TYPE_LABELS: Record<string, string> = {
