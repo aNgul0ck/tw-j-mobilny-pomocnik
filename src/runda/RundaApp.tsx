@@ -1,5 +1,9 @@
 import { useState, useRef, useLayoutEffect } from 'react';
 import {
+  MapPin, ListChecks, Users, User,
+  Navigation, Layers, Plus, type LucideIcon,
+} from 'lucide-react';
+import {
   C, ACTIVITY_TYPE_LABELS, ACTIVITY_TYPE_ICONS, ACTIVITY_TYPE_COLORS,
   PLACE_TYPE_COLORS, getInitials, avatarColor,
 } from './theme';
