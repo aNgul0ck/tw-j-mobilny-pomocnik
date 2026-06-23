@@ -23,6 +23,13 @@ export interface ActivityJoin {
   profile: Profile;
 }
 
+export interface Comment {
+  id: string;
+  profile: Profile;
+  text: string;
+  created_at: string;
+}
+
 export interface Activity {
   id: string;
   user_id: string;
@@ -34,6 +41,8 @@ export interface Activity {
   profile: Profile;
   place: Place | null;
   joins: ActivityJoin[];
+  likes: number;
+  comments: Comment[];
 }
 
 export interface FriendWithStatus {
