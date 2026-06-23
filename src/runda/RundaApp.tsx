@@ -509,9 +509,9 @@ export default function RundaApp() {
   const acceptReq = (id: string) => setRequests(r => r.filter(x => x.id !== id));
 
   const headerAction = (() => {
-    if (active === 'feed') return <GlassIcon size={38} onClick={() => {}}>+</GlassIcon>;
+    if (active === 'feed') return <GlassIcon size={38} onClick={() => {}}><Plus size={18} strokeWidth={2.2} color={C.text} /></GlassIcon>;
     if (active === 'friends') return <SmallButton variant="green">Dodaj</SmallButton>;
-    if (active === 'profile') return <GlassIcon size={38} onClick={() => {}}>+</GlassIcon>;
+    if (active === 'profile') return <GlassIcon size={38} onClick={() => {}}><Plus size={18} strokeWidth={2.2} color={C.text} /></GlassIcon>;
     return null;
   })();
 
