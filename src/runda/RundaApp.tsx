@@ -448,9 +448,9 @@ function MapBackground({ active, selected, onSelect, onRecenter }: {
         display: 'flex', flexDirection: 'column', overflow: 'hidden',
         boxShadow: '0 6px 20px rgba(0,0,0,0.35)',
       }}>
-        <button onClick={() => onSelect(null)} style={{ background: 'none', border: 'none', width: 44, height: 44, color: C.text, fontSize: 17, cursor: 'pointer' }}>⧉</button>
+        <button onClick={() => onSelect(null)} style={{ background: 'none', border: 'none', width: 44, height: 44, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}><Layers size={19} strokeWidth={1.8} color={C.text} /></button>
         <div style={{ height: 0.5, background: C.border }} />
-        <button onClick={onRecenter} style={{ background: 'none', border: 'none', width: 44, height: 44, color: C.accent, fontSize: 17, cursor: 'pointer' }}>➤</button>
+        <button onClick={onRecenter} style={{ background: 'none', border: 'none', width: 44, height: 44, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}><Navigation size={18} strokeWidth={1.8} color={C.text} fill={C.text} /></button>
       </div>
     </div>
   );
