@@ -422,11 +422,45 @@ function FriendsContent({ requests, onAccept, onReject }: {
   );
 }
 
+// ── Sharing-mode segmented control ─────────────────────────────
+type ShareMode = 'always' | 'places';
+function ModeSwitch({ mode, onChange }: { mode: ShareMode; onChange: (m: ShareMode) => void }) {
+  const opts: { key: ShareMode; label: string }[] = [
+    { key: 'always', label: 'Zawsze' },
+    { key: 'places', label: 'Tylko w miejscach' },
+  ];
+  return (
+    <div style={{
+      display: 'flex', gap: 4, padding: 4, borderRadius: 14,
+      background: 'rgba(255,255,255,0.06)', border: `0.5px solid ${C.border}`,
+    }}>
+      {opts.map(o => {
+        const on = mode === o.key;
+        return (
+          <button key={o.key} onClick={() => onChange(o.key)} style={{
+            flex: 1, padding: '10px 0', borderRadius: 10, border: 'none', cursor: 'pointer',
+            fontFamily: FONT, fontSize: 13.5, fontWeight: on ? 700 : 600,
+            background: on ? '#fff' : 'transparent', color: on ? '#000' : C.textSec,
+            transition: 'all .18s',
+          }}>{o.label}</button>
+        );
+      })}
+    </div>
+  );
+}
+
 // ── Tab content: Ja (settings) ─────────────────────────────────
 function JaContent() {
-  const [share, setShare] = useState(true);
+  const [mode, setMode] = useState<ShareMode>('places');
+  // Per-place arrival triggers: arriving notifies friends + sets you online.
+  const [triggers, setTriggers] = useState<Record<number, boolean>>(
+    () => Object.fromEntries(places.map((pl, i) => [pl.id, i < 2])),
+  );
+  const [notifyOnArrive, setNotifyOnArrive] = useState(true);
   const [requests, setRequests] = useState(true);
   const [copied, setCopied] = useState(false);
+
+  const activeTriggers = Object.values(triggers).filter(Boolean).length;
 
   const copy = () => {
     navigator.clipboard?.writeText(me.phone).catch(() => {});
@@ -440,23 +474,67 @@ function JaContent() {
         Disseminat Polígon 25, 648, Manacor · Baleary, Hiszpania
       </div>
 
-      <SectionLabel>Moje położenie</SectionLabel>
-      <Card>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '14px 16px', borderBottom: `0.5px solid ${C.borderLight}` }}>
-          <span style={{ fontSize: 15, fontWeight: 500, color: C.text }}>Udostępniaj moje położenie</span>
-          <Toggle on={share} onChange={() => setShare(v => !v)} />
-        </div>
-        <Row label="Udostępniasz z:" value="Ten telefon" />
-        <Row label="Etykieta położenia" value="Brak ›" onClick={() => {}} divider={false} />
-      </Card>
+      <SectionLabel>Tryb udostępniania</SectionLabel>
+      <div style={{ padding: '0 2px' }}>
+        <ModeSwitch mode={mode} onChange={setMode} />
+      </div>
+      <div style={{ fontSize: 12.5, color: C.textTert, margin: '10px 6px 0', lineHeight: 1.45 }}>
+        {mode === 'always'
+          ? 'Twoja lokalizacja jest cały czas widoczna dla znajomych, którym ją udostępniasz.'
+          : 'Jesteś niewidoczny, dopóki nie dotrzesz do jednego z wybranych miejsc poniżej. Wtedy stajesz się online.'}
+      </div>
+
+      {mode === 'places' && (
+        <>
+          <SectionLabel>Wyzwalacze miejsc · {activeTriggers}</SectionLabel>
+          <Card>
+            {places.map((pl, i) => {
+              const on = !!triggers[pl.id];
+              return (
+                <div key={pl.id} style={{
+                  display: 'flex', alignItems: 'center', gap: 13, padding: '13px 16px',
+                  borderBottom: i === places.length - 1 ? 'none' : `0.5px solid ${C.borderLight}`,
+                }}>
+                  <div style={{
+                    width: 38, height: 38, borderRadius: 12, flexShrink: 0,
+                    background: 'rgba(255,255,255,0.08)', border: `0.5px solid ${C.border}`,
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  }}><MapPin size={17} strokeWidth={2} color={on ? C.text : C.textTert} /></div>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontSize: 15, fontWeight: 600, color: C.text }}>{pl.name}</div>
+                    <div style={{ fontSize: 12.5, color: on ? C.accentLight : C.textTert, marginTop: 2 }}>
+                      {PLACE_TYPE_LABELS[pl.type]} · {on ? `gdy dotrę, powiadom (${pl.radius_m} m)` : 'wyłączony'}
+                    </div>
+                  </div>
+                  <Toggle on={on} onChange={() => setTriggers(t => ({ ...t, [pl.id]: !t[pl.id] }))} />
+                </div>
+              );
+            })}
+          </Card>
+          <div style={{ marginTop: 10 }}>
+            <SmallButton onClick={() => {}}><Plus size={14} strokeWidth={2.5} style={{ verticalAlign: -2, marginRight: 4 }} />Dodaj miejsce</SmallButton>
+          </div>
+        </>
+      )}
 
       <SectionLabel>Powiadomienia</SectionLabel>
       <Card>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '14px 16px', borderBottom: `0.5px solid ${C.borderLight}` }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 13, padding: '13px 16px', borderBottom: `0.5px solid ${C.borderLight}` }}>
+          <div style={{
+            width: 38, height: 38, borderRadius: 12, flexShrink: 0,
+            background: 'rgba(255,255,255,0.08)', border: `0.5px solid ${C.border}`,
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+          }}><Bell size={17} strokeWidth={2} color={C.text} /></div>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div style={{ fontSize: 15, fontWeight: 600, color: C.text }}>Powiadamiaj znajomych</div>
+            <div style={{ fontSize: 12.5, color: C.textTert, marginTop: 2 }}>Gdy dotrę do wyzwalacza</div>
+          </div>
+          <Toggle on={notifyOnArrive} onChange={() => setNotifyOnArrive(v => !v)} />
+        </div>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '14px 16px' }}>
           <span style={{ fontSize: 15, fontWeight: 500, color: C.text }}>Zezwalaj na prośby</span>
           <Toggle on={requests} onChange={() => setRequests(v => !v)} />
         </div>
-        <Row label="Dostosuj powiadomienia" value="›" onClick={() => {}} divider={false} />
       </Card>
 
       <SectionLabel>Mój numer</SectionLabel>
