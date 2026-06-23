@@ -599,7 +599,7 @@ export default function RundaApp() {
           boxShadow: '0 10px 34px rgba(0,0,0,0.45)', display: 'flex', padding: '11px 8px', zIndex: 10,
         }}>
           {TABS.map(tab => {
-            const isActive = active === tab.key;
+            const isActive = active === tab.key && expanded;
             const Icon = tab.icon;
             return (
               <button key={tab.key} onClick={() => selectTab(tab.key)} style={{
