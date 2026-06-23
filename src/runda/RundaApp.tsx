@@ -274,7 +274,7 @@ function ActivityPost({ activity, mine, joined, onToggleJoin, interactions, defa
 
 
 // ── Tab content: Osoby (live location) ─────────────────────────
-function OsobyContent({ onFocus, onPlan }: { onFocus: (id: string) => void; onPlan: () => void }) {
+function OsobyContent({ onFocus, onSettings }: { onFocus: (id: string) => void; onSettings: () => void }) {
   return (
     <>
       <div style={{ display: 'flex', gap: 18, overflowX: 'auto', padding: '4px 6px 16px' }} className="hide-scrollbar">
