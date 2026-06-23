@@ -418,8 +418,6 @@ function MapBackground({ active, selected, onSelect, onRecenter }: {
 
       {/* friend pins (people sharing location) */}
       {active === 'map' && sharing.map((f, i) => {
-        const a = f.activity;
-        const col = a?.place ? (PLACE_TYPE_COLORS[a.place.type] ?? C.accent) : C.accent;
         const isSel = selected === f.profile.id;
         return (
           <button
