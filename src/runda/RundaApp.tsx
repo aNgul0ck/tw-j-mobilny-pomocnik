@@ -142,62 +142,136 @@ function GlassIcon({ children, onClick, size = 44 }: { children: React.ReactNode
   );
 }
 
-// ── Activity card (Aktywności) ─────────────────────────────────
-function ActivityCard({ activity, mine, joined, onToggleJoin }: {
+// ── Interaction state per post (likes / comments) ──────────────
+export interface PostState { liked: boolean; likeCount: number; comments: Comment[] }
+export type Interactions = {
+  get: (id: string) => PostState;
+  toggleLike: (id: string) => void;
+  addComment: (id: string, text: string) => void;
+};
+
+// ── Comments thread ────────────────────────────────────────────
+function CommentsThread({ comments, onAdd }: { comments: Comment[]; onAdd: (text: string) => void }) {
+  const [text, setText] = useState('');
+  const submit = () => {
+    const t = text.trim();
+    if (!t) return;
+    onAdd(t);
+    setText('');
+  };
+  return (
+    <div style={{ marginTop: 12, paddingTop: 12, borderTop: `0.5px solid ${C.borderLight}` }}>
+      {comments.map(c => (
+        <div key={c.id} style={{ display: 'flex', gap: 9, marginBottom: 10 }}>
+          <Avatar initials={getInitials(c.profile.name)} color={avatarColor(c.profile.id)} size={28} />
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <span style={{ fontSize: 13, fontWeight: 600, color: C.text }}>{c.profile.name.split(' ')[0]} </span>
+            <span style={{ fontSize: 13, color: C.textSec }}>{c.text}</span>
+            <div style={{ fontSize: 11, color: C.textTert, marginTop: 1 }}>{timeAgo(c.created_at)}</div>
+          </div>
+        </div>
+      ))}
+      <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginTop: comments.length ? 4 : 0 }}>
+        <input
+          value={text}
+          onChange={e => setText(e.target.value)}
+          onKeyDown={e => { if (e.key === 'Enter') submit(); }}
+          placeholder="Dodaj komentarz…"
+          style={{
+            flex: 1, background: 'rgba(255,255,255,0.06)', border: `0.5px solid ${C.border}`,
+            borderRadius: 999, padding: '9px 14px', color: C.text, fontSize: 13, fontFamily: FONT, outline: 'none',
+          }}
+        />
+        <button onClick={submit} disabled={!text.trim()} style={{
+          background: 'none', border: 'none', cursor: text.trim() ? 'pointer' : 'default',
+          color: text.trim() ? C.text : C.textTert, display: 'flex', padding: 6,
+        }}><Send size={18} strokeWidth={2} /></button>
+      </div>
+    </div>
+  );
+}
+
+// ── Activity post (feed / tablica aktualności) ─────────────────
+function ActivityPost({ activity, mine, joined, onToggleJoin, interactions, defaultOpenComments }: {
   activity: Activity; mine?: boolean; joined?: boolean; onToggleJoin?: () => void;
+  interactions: Interactions; defaultOpenComments?: boolean;
 }) {
-  const col = ACTIVITY_TYPE_COLORS[activity.activity_type];
   const icon = ACTIVITY_TYPE_ICONS[activity.activity_type];
   const label = ACTIVITY_TYPE_LABELS[activity.activity_type];
   const place = activity.place?.name ?? activity.custom_place;
+  const st = interactions.get(activity.id);
+  const [openComments, setOpenComments] = useState(!!defaultOpenComments);
+
   const timingMap = {
-    now: { t: 'Teraz', c: C.textSec, bg: C.soonBg, dot: true },
-    soon: { t: 'Za chwilę', c: C.soon, bg: C.soonBg, dot: false },
-    planned: { t: 'Planowane', c: C.planned, bg: C.plannedBg, dot: false },
+    now: { t: 'Teraz', dot: true },
+    soon: { t: 'Za chwilę', dot: false },
+    planned: { t: 'Planowane', dot: false },
   }[activity.timing];
+
+  const joinCount = activity.joins.length + (joined ? 1 : 0);
 
   return (
     <Card style={{ marginBottom: 12, padding: 16 }}>
-      <div style={{ display: 'flex', gap: 13, alignItems: 'flex-start' }}>
-        <div style={{
-          width: 46, height: 46, borderRadius: 14, background: col + '26',
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-          fontSize: 21, color: col, border: `0.5px solid ${col}40`,
-        }}>{icon}</div>
+      {/* header: who posted */}
+      <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
+        <Avatar initials={mine ? getInitials(me.name) : getInitials(activity.profile.name)} color={mine ? avatarColor(me.id) : avatarColor(activity.profile.id)} size={42} online={activity.timing === 'now'} />
         <div style={{ flex: 1, minWidth: 0 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <span style={{ fontWeight: 700, fontSize: 16, color: C.text }}>
-              {mine ? 'Ty' : activity.profile.name}
-            </span>
-            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5, fontSize: 11, fontWeight: 600, color: timingMap.c, background: timingMap.bg, padding: '3px 9px', borderRadius: 999 }}>
+            <span style={{ fontWeight: 700, fontSize: 15.5, color: C.text }}>{mine ? 'Ty' : activity.profile.name}</span>
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5, fontSize: 11, fontWeight: 600, color: C.textSec, background: C.soonBg, padding: '3px 9px', borderRadius: 999 }}>
               {timingMap.dot && <span style={{ width: 6, height: 6, borderRadius: 3, background: C.online }} />}
               {timingMap.t}
             </span>
           </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginTop: 4 }}>
-            <span style={{ fontWeight: 600, fontSize: 14, color: C.textSec }}>{label}</span>
-            {place && <span style={{ fontSize: 13.5, color: C.textTert }}>· {place}</span>}
-          </div>
-          {activity.message && (
-            <div style={{ fontSize: 13.5, color: C.textSec, fontStyle: 'italic', marginTop: 7 }}>"{activity.message}"</div>
-          )}
-          {(activity.joins.length > 0 || joined) && (
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 11 }}>
-              <span style={{ fontSize: 12.5, color: C.textSec }}>
-                {activity.joins.length + (joined ? 1 : 0)} dołącza{joined ? ' (Ty)' : ''}
-              </span>
-            </div>
-          )}
+          <div style={{ fontSize: 12, color: C.textTert, marginTop: 2 }}>{timeAgo(activity.created_at)}</div>
         </div>
-        <div style={{ alignSelf: 'center' }}>
-          {mine
-            ? <SmallButton variant="danger">Zakończ</SmallButton>
-            : <SmallButton variant={joined ? 'plain' : 'green'} onClick={onToggleJoin}>{joined ? 'Anuluj' : 'Dołącz'}</SmallButton>}
-        </div>
+        {mine
+          ? <SmallButton variant="danger">Zakończ</SmallButton>
+          : <SmallButton variant={joined ? 'plain' : 'green'} onClick={onToggleJoin}>{joined ? 'Idziesz ✓' : 'Dołącz'}</SmallButton>}
       </div>
+
+      {/* body: activity + message */}
+      <div style={{ marginTop: 12 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
+          <span style={{ fontSize: 16 }}>{icon}</span>
+          <span style={{ fontWeight: 700, fontSize: 15, color: C.text }}>{label}</span>
+          {place && <span style={{ fontSize: 13.5, color: C.textTert }}>· {place}</span>}
+        </div>
+        {activity.message && (
+          <div style={{ fontSize: 14.5, color: C.text, marginTop: 8, lineHeight: 1.4 }}>{activity.message}</div>
+        )}
+        {joinCount > 0 && (
+          <div style={{ fontSize: 12.5, color: C.textSec, marginTop: 10 }}>
+            {joinCount} dołącza{joined ? ' · w tym Ty' : ''}
+          </div>
+        )}
+      </div>
+
+      {/* actions: like / comment */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 20, marginTop: 14 }}>
+        <button onClick={() => interactions.toggleLike(activity.id)} style={{
+          background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 7,
+          color: st.liked ? C.danger : C.textSec, fontFamily: FONT, fontSize: 13.5, fontWeight: 600, padding: 0,
+        }}>
+          <Heart size={19} strokeWidth={2} fill={st.liked ? C.danger : 'none'} />
+          {st.likeCount > 0 && st.likeCount}
+        </button>
+        <button onClick={() => setOpenComments(v => !v)} style={{
+          background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 7,
+          color: openComments ? C.text : C.textSec, fontFamily: FONT, fontSize: 13.5, fontWeight: 600, padding: 0,
+        }}>
+          <MessageCircle size={19} strokeWidth={2} />
+          {st.comments.length > 0 && st.comments.length}
+        </button>
+      </div>
+
+      {openComments && (
+        <CommentsThread comments={st.comments} onAdd={text => interactions.addComment(activity.id, text)} />
+      )}
     </Card>
   );
 }
+
 
 // ── Tab content: Osoby (live location) ─────────────────────────
 function OsobyContent({ onFocus, onPlan }: { onFocus: (id: string) => void; onPlan: () => void }) {
