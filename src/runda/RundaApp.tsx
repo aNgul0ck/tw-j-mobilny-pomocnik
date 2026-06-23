@@ -304,7 +304,7 @@ function OsobyContent({ onFocus, onPlan }: { onFocus: (id: string) => void; onPl
                 <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginTop: 2 }}>
                   {a ? (
                     <>
-                      <span style={{ fontSize: 12, color: ACTIVITY_TYPE_COLORS[a.activity_type] }}>{ACTIVITY_TYPE_ICONS[a.activity_type]}</span>
+                      <span style={{ fontSize: 12 }}>{ACTIVITY_TYPE_ICONS[a.activity_type]}</span>
                       <span style={{ fontSize: 13, fontWeight: 600, color: C.textSec }}>{ACTIVITY_TYPE_LABELS[a.activity_type]}</span>
                       {a.place && <span style={{ fontSize: 12.5, color: C.textTert }}>· {a.place.name}</span>}
                     </>
