@@ -541,8 +541,8 @@ export default function RundaApp() {
           ref={sheetRef}
           style={{
             position: 'absolute', left: 0, right: 0, bottom: 86, top: 90,
-            ...GLASS, background: C.surfaceSolid, backdropFilter: 'blur(34px) saturate(180%)',
-            WebkitBackdropFilter: 'blur(34px) saturate(180%)',
+            ...GLASS, background: C.surfaceSolid, backdropFilter: 'blur(28px)',
+            WebkitBackdropFilter: 'blur(28px)',
             borderRadius: 30,
             boxShadow: '0 -12px 40px rgba(0,0,0,0.5)',
             transform: `translateY(${translate}px)`,
