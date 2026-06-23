@@ -559,7 +559,7 @@ export default function RundaApp() {
           >
             <div style={{ width: 38, height: 5, borderRadius: 3, background: 'rgba(255,255,255,0.22)', margin: '0 auto 14px' }} />
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <div style={{ fontSize: 28, fontWeight: 800, color: C.text, letterSpacing: -0.8 }}>{SHEET_TITLE[active]}</div>
+              <div style={{ fontSize: 28, fontWeight: 800, color: C.text, letterSpacing: -1 }}>{SHEET_TITLE[active]}<span style={{ color: C.text }}>.</span></div>
               {headerAction}
             </div>
           </div>
