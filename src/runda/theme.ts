@@ -16,6 +16,7 @@ export const C = {
   accentBorder: 'rgba(255,255,255,0.24)',
   // online status — the single permitted micro-color.
   online: '#30D158',
+  onlineBg: 'rgba(48,209,88,0.16)',
   danger: '#FF453A',
   dangerBg: 'rgba(255,69,58,0.14)',
   dangerBorder: 'rgba(255,69,58,0.28)',
