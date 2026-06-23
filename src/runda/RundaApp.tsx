@@ -233,8 +233,8 @@ function OsobyContent({ onFocus, onPlan }: { onFocus: (id: string) => void; onPl
 
       <button onClick={onPlan} style={{
         width: '100%', padding: '16px', borderRadius: 16, border: 'none',
-        background: C.accent, color: '#06210f', fontWeight: 700, fontSize: 15,
-        cursor: 'pointer', fontFamily: FONT, boxShadow: `0 8px 24px ${C.accentBg}`,
+        background: '#fff', color: '#000', fontWeight: 800, fontSize: 15, letterSpacing: -0.2,
+        cursor: 'pointer', fontFamily: FONT, boxShadow: '0 8px 24px rgba(0,0,0,0.4)',
       }}>Zaplanuj spotkanie</button>
     </>
   );
