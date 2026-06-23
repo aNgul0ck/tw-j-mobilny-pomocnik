@@ -317,11 +317,11 @@ function OsobyContent({ onFocus, onSettings }: { onFocus: (id: string) => void; 
         })}
       </Card>
 
-      <button onClick={onPlan} style={{
-        width: '100%', padding: '16px', borderRadius: 16, border: 'none',
-        background: '#fff', color: '#000', fontWeight: 800, fontSize: 15, letterSpacing: -0.2,
-        cursor: 'pointer', fontFamily: FONT, boxShadow: '0 8px 24px rgba(0,0,0,0.4)',
-      }}>Zaplanuj spotkanie</button>
+      <button onClick={onSettings} style={{
+        width: '100%', padding: '15px', borderRadius: 16, border: `0.5px solid ${C.border}`,
+        background: 'rgba(255,255,255,0.06)', color: C.text, fontWeight: 700, fontSize: 14.5, letterSpacing: -0.2,
+        cursor: 'pointer', fontFamily: FONT, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+      }}><Radar size={17} strokeWidth={2} /> Ustaw automatyzacje położenia</button>
     </>
   );
 }
