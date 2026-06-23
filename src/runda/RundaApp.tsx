@@ -1,16 +1,25 @@
 import { useState, useRef, useLayoutEffect } from 'react';
 import {
   MapPin, ListChecks, Users, User,
-  Navigation, Layers, Plus, type LucideIcon,
+  Navigation, Layers, Plus, Heart, MessageCircle, Send, X, type LucideIcon,
 } from 'lucide-react';
 import {
-  C, ACTIVITY_TYPE_LABELS, ACTIVITY_TYPE_ICONS, ACTIVITY_TYPE_COLORS,
+  C, ACTIVITY_TYPE_LABELS, ACTIVITY_TYPE_ICONS,
   getInitials, avatarColor,
 } from './theme';
 import {
   me, friends, activities, pendingRequests, contacts,
-  Activity, FriendWithStatus, Profile, Contact,
+  Activity, FriendWithStatus, Profile, Contact, Comment,
 } from './mock';
+
+// "8 min temu" style relative time.
+function timeAgo(iso: string): string {
+  const min = Math.max(0, Math.round((Date.now() - new Date(iso).getTime()) / 60000));
+  if (min < 1) return 'teraz';
+  if (min < 60) return `${min} min temu`;
+  const h = Math.round(min / 60);
+  return `${h} godz. temu`;
+}
 
 const FONT = "'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif";
 
