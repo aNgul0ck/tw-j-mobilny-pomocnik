@@ -269,7 +269,7 @@ function FriendsContent({ requests, onAccept, onReject }: {
           <Card>
             {requests.map((req, i) => (
               <div key={req.id} style={{ display: 'flex', alignItems: 'center', gap: 13, padding: '13px 16px', borderBottom: i === requests.length - 1 ? 'none' : `0.5px solid ${C.borderLight}` }}>
-                <Avatar initials={getInitials(req.name)} color={ACTIVITY_TYPE_COLORS.galeria} size={42} />
+                <Avatar initials={getInitials(req.name)} color={avatarColor(req.id)} size={42} />
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div style={{ fontSize: 15, fontWeight: 600, color: C.text }}>{req.name}</div>
                   <div style={{ fontSize: 12.5, color: C.textTert }}>{req.phone}</div>
