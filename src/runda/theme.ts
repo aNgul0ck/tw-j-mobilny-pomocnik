@@ -16,6 +16,7 @@ export const C = {
   accentBorder: 'rgba(255,255,255,0.24)',
   // online status — the single permitted micro-color.
   online: '#30D158',
+  onlineBg: 'rgba(48,209,88,0.16)',
   danger: '#FF453A',
   dangerBg: 'rgba(255,69,58,0.14)',
   dangerBorder: 'rgba(255,69,58,0.28)',
@@ -81,17 +82,18 @@ export const ACTIVITY_TYPE_ICONS: Record<ActivityType, string> = {
   inne: '·',
 };
 
+// Someone's activity is the one element allowed to carry color (green).
 export const ACTIVITY_TYPE_COLORS: Record<ActivityType, string> = {
-  kawa: '#FFFFFF',
-  spacer: '#FFFFFF',
-  siłownia: '#FFFFFF',
-  plac_zabaw: '#FFFFFF',
-  galeria: '#FFFFFF',
-  coworking: '#FFFFFF',
-  rower: '#FFFFFF',
-  zakupy: '#FFFFFF',
-  wydarzenie: '#FFFFFF',
-  inne: '#FFFFFF',
+  kawa: '#30D158',
+  spacer: '#30D158',
+  siłownia: '#30D158',
+  plac_zabaw: '#30D158',
+  galeria: '#30D158',
+  coworking: '#30D158',
+  rower: '#30D158',
+  zakupy: '#30D158',
+  wydarzenie: '#30D158',
+  inne: '#30D158',
 };
 
 export const PLACE_TYPE_LABELS: Record<string, string> = {
