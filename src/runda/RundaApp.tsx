@@ -1,14 +1,14 @@
 import { useState, useRef, useLayoutEffect } from 'react';
 import {
   MapPin, ListChecks, Users, User,
-  Navigation, Layers, Plus, Heart, MessageCircle, Send, X, type LucideIcon,
+  Navigation, Layers, Plus, Heart, MessageCircle, Send, X, Radar, Bell, type LucideIcon,
 } from 'lucide-react';
 import {
-  C, ACTIVITY_TYPE_LABELS, ACTIVITY_TYPE_ICONS,
+  C, ACTIVITY_TYPE_LABELS, ACTIVITY_TYPE_ICONS, PLACE_TYPE_LABELS,
   getInitials, avatarColor,
 } from './theme';
 import {
-  me, friends, activities, pendingRequests, contacts,
+  me, friends, activities, pendingRequests, contacts, places,
   Activity, FriendWithStatus, Profile, Contact, Comment,
 } from './mock';
 
@@ -117,18 +117,7 @@ function Toggle({ on, onChange }: { on: boolean; onChange: () => void }) {
   );
 }
 
-function Row({ label, value, onClick, divider = true }: { label: React.ReactNode; value?: React.ReactNode; onClick?: () => void; divider?: boolean }) {
-  return (
-    <div onClick={onClick} style={{
-      display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-      padding: '14px 16px', borderBottom: divider ? `0.5px solid ${C.borderLight}` : 'none',
-      cursor: onClick ? 'pointer' : 'default',
-    }}>
-      <span style={{ fontSize: 15, fontWeight: 500, color: C.text }}>{label}</span>
-      {value != null && <span style={{ fontSize: 15, color: C.textSec }}>{value}</span>}
-    </div>
-  );
-}
+
 
 // ── Round glass icon button ────────────────────────────────────
 function GlassIcon({ children, onClick, size = 44 }: { children: React.ReactNode; onClick?: () => void; size?: number }) {
@@ -274,7 +263,7 @@ function ActivityPost({ activity, mine, joined, onToggleJoin, interactions, defa
 
 
 // ── Tab content: Osoby (live location) ─────────────────────────
-function OsobyContent({ onFocus, onPlan }: { onFocus: (id: string) => void; onPlan: () => void }) {
+function OsobyContent({ onFocus, onSettings }: { onFocus: (id: string) => void; onSettings: () => void }) {
   return (
     <>
       <div style={{ display: 'flex', gap: 18, overflowX: 'auto', padding: '4px 6px 16px' }} className="hide-scrollbar">
@@ -317,11 +306,11 @@ function OsobyContent({ onFocus, onPlan }: { onFocus: (id: string) => void; onPl
         })}
       </Card>
 
-      <button onClick={onPlan} style={{
-        width: '100%', padding: '16px', borderRadius: 16, border: 'none',
-        background: '#fff', color: '#000', fontWeight: 800, fontSize: 15, letterSpacing: -0.2,
-        cursor: 'pointer', fontFamily: FONT, boxShadow: '0 8px 24px rgba(0,0,0,0.4)',
-      }}>Zaplanuj spotkanie</button>
+      <button onClick={onSettings} style={{
+        width: '100%', padding: '15px', borderRadius: 16, border: `0.5px solid ${C.border}`,
+        background: 'rgba(255,255,255,0.06)', color: C.text, fontWeight: 700, fontSize: 14.5, letterSpacing: -0.2,
+        cursor: 'pointer', fontFamily: FONT, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+      }}><Radar size={17} strokeWidth={2} /> Ustaw automatyzacje położenia</button>
     </>
   );
 }
@@ -422,11 +411,45 @@ function FriendsContent({ requests, onAccept, onReject }: {
   );
 }
 
+// ── Sharing-mode segmented control ─────────────────────────────
+type ShareMode = 'always' | 'places';
+function ModeSwitch({ mode, onChange }: { mode: ShareMode; onChange: (m: ShareMode) => void }) {
+  const opts: { key: ShareMode; label: string }[] = [
+    { key: 'always', label: 'Zawsze' },
+    { key: 'places', label: 'Tylko w miejscach' },
+  ];
+  return (
+    <div style={{
+      display: 'flex', gap: 4, padding: 4, borderRadius: 14,
+      background: 'rgba(255,255,255,0.06)', border: `0.5px solid ${C.border}`,
+    }}>
+      {opts.map(o => {
+        const on = mode === o.key;
+        return (
+          <button key={o.key} onClick={() => onChange(o.key)} style={{
+            flex: 1, padding: '10px 0', borderRadius: 10, border: 'none', cursor: 'pointer',
+            fontFamily: FONT, fontSize: 13.5, fontWeight: on ? 700 : 600,
+            background: on ? '#fff' : 'transparent', color: on ? '#000' : C.textSec,
+            transition: 'all .18s',
+          }}>{o.label}</button>
+        );
+      })}
+    </div>
+  );
+}
+
 // ── Tab content: Ja (settings) ─────────────────────────────────
 function JaContent() {
-  const [share, setShare] = useState(true);
+  const [mode, setMode] = useState<ShareMode>('places');
+  // Per-place arrival triggers: arriving notifies friends + sets you online.
+  const [triggers, setTriggers] = useState<Record<number, boolean>>(
+    () => Object.fromEntries(places.map((pl, i) => [pl.id, i < 2])),
+  );
+  const [notifyOnArrive, setNotifyOnArrive] = useState(true);
   const [requests, setRequests] = useState(true);
   const [copied, setCopied] = useState(false);
+
+  const activeTriggers = Object.values(triggers).filter(Boolean).length;
 
   const copy = () => {
     navigator.clipboard?.writeText(me.phone).catch(() => {});
@@ -440,23 +463,67 @@ function JaContent() {
         Disseminat Polígon 25, 648, Manacor · Baleary, Hiszpania
       </div>
 
-      <SectionLabel>Moje położenie</SectionLabel>
-      <Card>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '14px 16px', borderBottom: `0.5px solid ${C.borderLight}` }}>
-          <span style={{ fontSize: 15, fontWeight: 500, color: C.text }}>Udostępniaj moje położenie</span>
-          <Toggle on={share} onChange={() => setShare(v => !v)} />
-        </div>
-        <Row label="Udostępniasz z:" value="Ten telefon" />
-        <Row label="Etykieta położenia" value="Brak ›" onClick={() => {}} divider={false} />
-      </Card>
+      <SectionLabel>Tryb udostępniania</SectionLabel>
+      <div style={{ padding: '0 2px' }}>
+        <ModeSwitch mode={mode} onChange={setMode} />
+      </div>
+      <div style={{ fontSize: 12.5, color: C.textTert, margin: '10px 6px 0', lineHeight: 1.45 }}>
+        {mode === 'always'
+          ? 'Twoja lokalizacja jest cały czas widoczna dla znajomych, którym ją udostępniasz.'
+          : 'Jesteś niewidoczny, dopóki nie dotrzesz do jednego z wybranych miejsc poniżej. Wtedy stajesz się online.'}
+      </div>
+
+      {mode === 'places' && (
+        <>
+          <SectionLabel>Wyzwalacze miejsc · {activeTriggers}</SectionLabel>
+          <Card>
+            {places.map((pl, i) => {
+              const on = !!triggers[pl.id];
+              return (
+                <div key={pl.id} style={{
+                  display: 'flex', alignItems: 'center', gap: 13, padding: '13px 16px',
+                  borderBottom: i === places.length - 1 ? 'none' : `0.5px solid ${C.borderLight}`,
+                }}>
+                  <div style={{
+                    width: 38, height: 38, borderRadius: 12, flexShrink: 0,
+                    background: 'rgba(255,255,255,0.08)', border: `0.5px solid ${C.border}`,
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  }}><MapPin size={17} strokeWidth={2} color={on ? C.text : C.textTert} /></div>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontSize: 15, fontWeight: 600, color: C.text }}>{pl.name}</div>
+                    <div style={{ fontSize: 12.5, color: on ? C.accentLight : C.textTert, marginTop: 2 }}>
+                      {PLACE_TYPE_LABELS[pl.type]} · {on ? `gdy dotrę, powiadom (${pl.radius_m} m)` : 'wyłączony'}
+                    </div>
+                  </div>
+                  <Toggle on={on} onChange={() => setTriggers(t => ({ ...t, [pl.id]: !t[pl.id] }))} />
+                </div>
+              );
+            })}
+          </Card>
+          <div style={{ marginTop: 10 }}>
+            <SmallButton onClick={() => {}}><Plus size={14} strokeWidth={2.5} style={{ verticalAlign: -2, marginRight: 4 }} />Dodaj miejsce</SmallButton>
+          </div>
+        </>
+      )}
 
       <SectionLabel>Powiadomienia</SectionLabel>
       <Card>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '14px 16px', borderBottom: `0.5px solid ${C.borderLight}` }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 13, padding: '13px 16px', borderBottom: `0.5px solid ${C.borderLight}` }}>
+          <div style={{
+            width: 38, height: 38, borderRadius: 12, flexShrink: 0,
+            background: 'rgba(255,255,255,0.08)', border: `0.5px solid ${C.border}`,
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+          }}><Bell size={17} strokeWidth={2} color={C.text} /></div>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div style={{ fontSize: 15, fontWeight: 600, color: C.text }}>Powiadamiaj znajomych</div>
+            <div style={{ fontSize: 12.5, color: C.textTert, marginTop: 2 }}>Gdy dotrę do wyzwalacza</div>
+          </div>
+          <Toggle on={notifyOnArrive} onChange={() => setNotifyOnArrive(v => !v)} />
+        </div>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '14px 16px' }}>
           <span style={{ fontSize: 15, fontWeight: 500, color: C.text }}>Zezwalaj na prośby</span>
           <Toggle on={requests} onChange={() => setRequests(v => !v)} />
         </div>
-        <Row label="Dostosuj powiadomienia" value="›" onClick={() => {}} divider={false} />
       </Card>
 
       <SectionLabel>Mój numer</SectionLabel>
@@ -726,7 +793,7 @@ export default function RundaApp() {
           </div>
 
           <div style={{ flex: 1, overflowY: 'auto', padding: '8px 16px 24px' }} className="hide-scrollbar">
-            {active === 'map' && <OsobyContent onFocus={focusFriend} onPlan={() => selectTab('feed')} />}
+            {active === 'map' && <OsobyContent onFocus={focusFriend} onSettings={() => selectTab('profile')} />}
             {active === 'feed' && <FeedContent joined={joined} onToggleJoin={toggleJoin} interactions={interactions} />}
             {active === 'friends' && <FriendsContent requests={requests} onAccept={acceptReq} onReject={acceptReq} />}
             {active === 'profile' && <JaContent />}
