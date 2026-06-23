@@ -508,6 +508,11 @@ export default function RundaApp() {
   };
 
   const selectTab = (key: Tab) => {
+    // Re-tapping the open tab closes the sheet (back to map + nav bar only).
+    if (key === active && expanded) {
+      setExpanded(false);
+      return;
+    }
     setActive(key);
     setExpanded(true);
   };
