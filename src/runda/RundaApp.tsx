@@ -735,22 +735,28 @@ export default function RundaApp() {
 
         {/* glass tab bar */}
         <div style={{
-          position: 'absolute', left: 16, right: 16, bottom: 18, borderRadius: 26,
+          position: 'absolute', left: 16, right: 16, bottom: 'max(18px, env(safe-area-inset-bottom, 18px))', borderRadius: 26,
           ...GLASS, background: 'rgba(12,12,12,0.72)',
           backdropFilter: 'blur(24px)', WebkitBackdropFilter: 'blur(24px)',
-          boxShadow: '0 10px 34px rgba(0,0,0,0.45)', display: 'flex', padding: '11px 8px', zIndex: 10,
+          boxShadow: '0 10px 34px rgba(0,0,0,0.45)', display: 'flex', padding: '8px 8px', zIndex: 30,
         }}>
           {TABS.map(tab => {
             const isActive = active === tab.key && expanded;
             const Icon = tab.icon;
             return (
-              <button key={tab.key} onClick={() => selectTab(tab.key)} style={{
-                flex: 1, background: 'none', border: 'none', cursor: 'pointer',
-                display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 5,
-                fontFamily: FONT, padding: 0,
-              }}>
-                <Icon size={21} strokeWidth={isActive ? 2.4 : 1.8} color={isActive ? C.text : C.textTert} style={{ transition: 'color .2s' }} />
-                <span style={{ fontSize: 10, fontWeight: isActive ? 600 : 500, color: isActive ? C.text : C.textTert }}>{tab.label}</span>
+              <button
+                key={tab.key}
+                type="button"
+                onClick={() => selectTab(tab.key)}
+                style={{
+                  flex: 1, background: 'none', border: 'none', cursor: 'pointer',
+                  display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 5,
+                  fontFamily: FONT, padding: '10px 0', minHeight: 52,
+                  touchAction: 'manipulation', WebkitTapHighlightColor: 'transparent', userSelect: 'none',
+                }}
+              >
+                <Icon size={21} strokeWidth={isActive ? 2.4 : 1.8} color={isActive ? C.text : C.textTert} style={{ transition: 'color .2s', pointerEvents: 'none' }} />
+                <span style={{ fontSize: 10, fontWeight: isActive ? 600 : 500, color: isActive ? C.text : C.textTert, pointerEvents: 'none' }}>{tab.label}</span>
               </button>
             );
           })}
