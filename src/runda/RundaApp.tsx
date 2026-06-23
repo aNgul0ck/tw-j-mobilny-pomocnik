@@ -476,8 +476,7 @@ export default function RundaApp() {
   const [joined, setJoined] = useState<Record<string, boolean>>({});
   const [requests, setRequests] = useState<Profile[]>(pendingRequests);
 
-  // Draggable bottom sheet — shared across all tabs
-  const PEEK = 150;
+  // Draggable bottom sheet — fully hidden behind the nav bar when collapsed.
   const sheetRef = useRef<HTMLDivElement>(null);
   const [sheetH, setSheetH] = useState(560);
   const [expanded, setExpanded] = useState(false);
@@ -487,8 +486,10 @@ export default function RundaApp() {
     if (sheetRef.current) setSheetH(sheetRef.current.offsetHeight);
   }, []);
 
-  const collapsedT = Math.max(0, sheetH - PEEK);
-  const baseT = expanded ? 0 : collapsedT;
+  // Collapsed → translate the whole sheet down past its own height so it
+  // disappears behind the (higher z-index) nav bar; only the bar stays visible.
+  const hiddenT = sheetH + 120;
+  const baseT = expanded ? 0 : hiddenT;
   const translate = drag ? drag.t : baseT;
 
   const onPointerDown = (e: React.PointerEvent) => {
@@ -497,12 +498,12 @@ export default function RundaApp() {
   };
   const onPointerMove = (e: React.PointerEvent) => {
     if (!drag) return;
-    const next = Math.min(collapsedT, Math.max(0, drag.baseT + (e.clientY - drag.startY)));
+    const next = Math.min(hiddenT, Math.max(0, drag.baseT + (e.clientY - drag.startY)));
     setDrag({ ...drag, t: next });
   };
   const onPointerUp = () => {
     if (!drag) return;
-    setExpanded(drag.t < collapsedT / 2);
+    setExpanded(drag.t < hiddenT / 2);
     setDrag(null);
   };
 
