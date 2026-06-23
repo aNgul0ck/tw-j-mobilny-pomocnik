@@ -1,14 +1,14 @@
 import { useState, useRef, useLayoutEffect } from 'react';
 import {
   MapPin, ListChecks, Users, User,
-  Navigation, Layers, Plus, Heart, MessageCircle, Send, X, type LucideIcon,
+  Navigation, Layers, Plus, Heart, MessageCircle, Send, X, Radar, Bell, type LucideIcon,
 } from 'lucide-react';
 import {
-  C, ACTIVITY_TYPE_LABELS, ACTIVITY_TYPE_ICONS,
+  C, ACTIVITY_TYPE_LABELS, ACTIVITY_TYPE_ICONS, PLACE_TYPE_LABELS,
   getInitials, avatarColor,
 } from './theme';
 import {
-  me, friends, activities, pendingRequests, contacts,
+  me, friends, activities, pendingRequests, contacts, places,
   Activity, FriendWithStatus, Profile, Contact, Comment,
 } from './mock';
 
