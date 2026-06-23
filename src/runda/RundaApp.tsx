@@ -12,8 +12,8 @@ const FONT = "'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif
 
 const GLASS: React.CSSProperties = {
   background: C.surface,
-  backdropFilter: 'blur(28px) saturate(180%)',
-  WebkitBackdropFilter: 'blur(28px) saturate(180%)',
+  backdropFilter: 'blur(20px)',
+  WebkitBackdropFilter: 'blur(20px)',
   border: `0.5px solid ${C.border}`,
 };
 
