@@ -142,7 +142,7 @@ function ActivityCard({ activity, mine, joined, onToggleJoin }: {
   const label = ACTIVITY_TYPE_LABELS[activity.activity_type];
   const place = activity.place?.name ?? activity.custom_place;
   const timingMap = {
-    now: { t: 'Teraz', c: C.accentLight, bg: C.accentBg },
+    now: { t: 'Teraz', c: C.online, bg: C.onlineBg },
     soon: { t: 'Za chwilę', c: C.soon, bg: C.soonBg },
     planned: { t: 'Planowane', c: C.planned, bg: C.plannedBg },
   }[activity.timing];
