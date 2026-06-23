@@ -100,9 +100,10 @@ function Toggle({ on, onChange }: { on: boolean; onChange: () => void }) {
       transition: 'background .2s', flexShrink: 0,
     }}>
       <span style={{
-        width: 26, height: 26, borderRadius: 13, background: '#fff',
+        width: 26, height: 26, borderRadius: 13, background: on ? '#000' : '#fff',
         boxShadow: '0 2px 6px rgba(0,0,0,0.3)', transition: 'all .2s',
       }} />
+
     </button>
   );
 }
