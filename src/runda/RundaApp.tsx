@@ -431,14 +431,14 @@ function MapBackground({ active, selected, onSelect, onRecenter }: {
             }}
           >
             <div style={{
-              ...GLASS, background: isSel ? 'rgba(48,209,88,0.28)' : C.surfaceSolid,
-              border: `0.5px solid ${isSel ? col : C.border}`,
+              ...GLASS, background: isSel ? '#fff' : C.surfaceSolid,
+              border: `0.5px solid ${isSel ? '#fff' : C.border}`,
               borderRadius: 999, padding: '5px 12px 5px 8px',
               display: 'flex', alignItems: 'center', gap: 7,
-              boxShadow: '0 6px 18px rgba(0,0,0,0.4)', fontFamily: FONT,
+              boxShadow: '0 6px 18px rgba(0,0,0,0.5)', fontFamily: FONT,
             }}>
-              <span style={{ width: 8, height: 8, borderRadius: 4, background: col }} />
-              <span style={{ fontSize: 13, fontWeight: 700, color: C.text }}>{f.profile.name.split(' ')[0]}</span>
+              <span style={{ width: 8, height: 8, borderRadius: 4, background: isSel ? '#000' : '#fff' }} />
+              <span style={{ fontSize: 13, fontWeight: 700, color: isSel ? '#000' : C.text }}>{f.profile.name.split(' ')[0]}</span>
             </div>
           </button>
         );
