@@ -564,6 +564,26 @@ export default function RundaApp() {
   const [joined, setJoined] = useState<Record<string, boolean>>({});
   const [requests, setRequests] = useState<Profile[]>(pendingRequests);
 
+  // Likes / comments per activity (tablica aktualności interactions).
+  const [likedMap, setLikedMap] = useState<Record<string, boolean>>({});
+  const [extraComments, setExtraComments] = useState<Record<string, Comment[]>>({});
+  const interactions: Interactions = {
+    get: (id) => {
+      const a = activities.find(x => x.id === id);
+      const liked = !!likedMap[id];
+      return {
+        liked,
+        likeCount: (a?.likes ?? 0) + (liked ? 1 : 0),
+        comments: [...(a?.comments ?? []), ...(extraComments[id] ?? [])],
+      };
+    },
+    toggleLike: (id) => setLikedMap(m => ({ ...m, [id]: !m[id] })),
+    addComment: (id, text) => setExtraComments(m => ({
+      ...m,
+      [id]: [...(m[id] ?? []), { id: `c-${Date.now()}`, profile: me, text, created_at: new Date().toISOString() }],
+    })),
+  };
+
   // Draggable bottom sheet — fully hidden behind the nav bar when collapsed.
   const sheetRef = useRef<HTMLDivElement>(null);
   const [sheetH, setSheetH] = useState(560);
