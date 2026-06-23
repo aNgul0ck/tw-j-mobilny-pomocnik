@@ -326,12 +326,14 @@ function OsobyContent({ onFocus, onPlan }: { onFocus: (id: string) => void; onPl
   );
 }
 
-// ── Tab content: Aktywności ────────────────────────────────────
-function FeedContent({ joined, onToggleJoin }: { joined: Record<string, boolean>; onToggleJoin: (id: string) => void }) {
+// ── Tab content: Aktywności (tablica aktualności) ──────────────
+function FeedContent({ joined, onToggleJoin, interactions }: {
+  joined: Record<string, boolean>; onToggleJoin: (id: string) => void; interactions: Interactions;
+}) {
   return (
     <>
       {activities.map(a => (
-        <ActivityCard key={a.id} activity={a} joined={!!joined[a.id]} onToggleJoin={() => onToggleJoin(a.id)} />
+        <ActivityPost key={a.id} activity={a} joined={!!joined[a.id]} onToggleJoin={() => onToggleJoin(a.id)} interactions={interactions} />
       ))}
     </>
   );
