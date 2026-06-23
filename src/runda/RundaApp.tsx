@@ -393,21 +393,22 @@ function MapBackground({ active, selected, onSelect, onRecenter }: {
 }) {
   return (
     <div style={{ position: 'absolute', inset: 0, overflow: 'hidden' }}>
-      {/* dark green map */}
+      {/* neutral dark map */}
       <div onClick={() => onSelect(null)} style={{
         position: 'absolute', inset: 0,
-        background: 'radial-gradient(120% 90% at 50% 25%, #2e4138 0%, #243029 55%, #18211c 100%)',
+        background: 'radial-gradient(120% 90% at 50% 25%, #1c1c1c 0%, #131313 55%, #000000 100%)',
       }} />
       {/* faint roads */}
-      <svg style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', opacity: 0.5, pointerEvents: 'none' }} preserveAspectRatio="none" viewBox="0 0 390 700">
-        <g stroke="rgba(255,255,255,0.12)" strokeWidth="2" fill="none">
+      <svg style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', opacity: 0.4, pointerEvents: 'none' }} preserveAspectRatio="none" viewBox="0 0 390 700">
+        <g stroke="rgba(255,255,255,0.10)" strokeWidth="2" fill="none">
           <path d="M-20 180 Q120 220 200 120 T420 90" />
           <path d="M40 -20 Q90 200 60 400 T120 720" />
           <path d="M-20 480 Q160 440 260 520 T430 470" />
           <path d="M260 -20 Q300 220 360 320 T420 640" />
         </g>
-        <path d="M40 -20 Q90 200 60 400 T120 720" stroke="rgba(90,140,250,0.4)" strokeWidth="2.5" fill="none" />
+        <path d="M40 -20 Q90 200 60 400 T120 720" stroke="rgba(255,255,255,0.18)" strokeWidth="2.5" fill="none" />
       </svg>
+
 
       {/* my location dot */}
       <div style={{ position: 'absolute', top: '32%', left: '46%', pointerEvents: 'none' }}>
