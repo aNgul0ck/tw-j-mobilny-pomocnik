@@ -23,11 +23,11 @@ const GLASS: React.CSSProperties = {
 
 type Tab = 'map' | 'feed' | 'friends' | 'profile';
 
-const TABS: { key: Tab; label: string; icon: string }[] = [
-  { key: 'map', label: 'Osoby', icon: '◈' },
-  { key: 'feed', label: 'Aktywności', icon: '◉' },
-  { key: 'friends', label: 'Znajomi', icon: '◎' },
-  { key: 'profile', label: 'Ja', icon: '◇' },
+const TABS: { key: Tab; label: string; icon: LucideIcon }[] = [
+  { key: 'map', label: 'Osoby', icon: MapPin },
+  { key: 'feed', label: 'Aktywności', icon: ListChecks },
+  { key: 'friends', label: 'Znajomi', icon: Users },
+  { key: 'profile', label: 'Ja', icon: User },
 ];
 
 const SHEET_TITLE: Record<Tab, string> = {
