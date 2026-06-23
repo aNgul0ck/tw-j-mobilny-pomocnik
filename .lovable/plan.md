@@ -1,47 +1,45 @@
-# Plan: Aplikacja "Lokalizator" (iOS / Android)
+## Cel
 
-Aplikacja mobilna, która powiadamia (pinguje) wybranych znajomych, gdy pojawisz się w określonej lokalizacji.
+Przenieść filozofię i minimalizm BeReal do aplikacji Runda, **nie zmieniając obecnych założeń** (mapa lokalizacji jako tło, wysuwany bottom sheet, 4 zakładki: Osoby / Aktywności / Znajomi / Ja, udostępnianie położenia przez numer telefonu i kontakty).
 
-## Jak powstanie aplikacja natywna
+## Czym kieruje się BeReal (analiza zrzutów)
 
-Budujemy aplikację jako web (React) w Lovable, a następnie pakujemy ją przez **Capacitor** do natywnych projektów iOS i Android. Capacitor daje dostęp do GPS w tle i powiadomień push. Na końcu, żeby zbudować plik instalacyjny i opublikować w App Store / Google Play, potrzebny będzie Mac z Xcode (iOS) i/lub Android Studio (Android) — sam kod tworzymy tutaj.
+1. **Surowa monochromia** — czerń, biel, szarości. Brak gradientów i kolorowych akcentów. Kolor pojawia się wyłącznie w treści użytkownika (zdjęcia/awatary).
+2. **Mocna typografia jako element marki** — gruby, ciasny wordmark zakończony kropką („BeReal."). Duże, bold nagłówki, mało tekstu pomocniczego.
+3. **Maksymalna redukcja chrome** — cienkie, proste ikony liniowe (nie ozdobne glify), minimum obramowań, dużo oddechu (whitespace).
+4. **Treść jest bohaterem** — interfejs schodzi na drugi plan, brak „wodotrysków", brak liczb próżności.
+5. **Autentyczność i prostota** — płaskie powierzchnie, ostre lub lekko zaokrąglone krawędzie, brak mocnego glassmorphism z saturacją.
 
-## Etapy
+## Co zmieniamy (tylko warstwa wizualna / prezentacja)
 
-### Etap 1 — Backend i konta (Lovable Cloud)
-- Włączenie Lovable Cloud (baza, logowanie, funkcje serwerowe).
-- Logowanie e-mail/hasło + Google.
-- Tabele: `profiles`, `friendships` (zaproszenia/znajomi), `places` (zapisane lokalizacje), `pings` (historia powiadomień).
-- Zabezpieczenia RLS: każdy widzi tylko swoje dane i dane znajomych.
+### 1. Paleta — `src/runda/theme.ts`
+- Tło: czysta czerń `#000000` (zamiast `#0E1512`).
+- Powierzchnie: ciemne grafity `rgba(20,20,20,…)` zamiast zielonkawego glassu z saturacją 180%.
+- Tekst: biel + szarości (zostają, lekko zwiększony kontrast).
+- **Akcent neutralny:** zamiast zieleni `#30D158` → biel/jasna szarość dla aktywnych stanów. Zieleń statusu „online" zostaje jako mała kropka (jedyny dopuszczony mikro-kolor, jak awatary w BeReal). Kolory typów aktywności i pinów wyciszamy do szarości (kolor zostaje tylko jako drobny wskaźnik).
+- Zmniejszenie `blur/saturate` w `GLASS` → bardziej płaskie, matowe powierzchnie.
 
-### Etap 2 — Rdzeń aplikacji webowej (mobile-first UI)
-- Ekran logowania / rejestracji.
-- Lista znajomych + zapraszanie po e-mailu/loginie.
-- Mapa z bieżącą pozycją i zapisanymi miejscami.
-- Tworzenie "miejsc" (np. dom, biuro) z promieniem geofence.
-- Ekran ustawień: kto ma dostawać ping i kiedy.
+### 2. Typografia — `src/runda/RundaApp.tsx`
+- Wordmark „Runda." z kropką w stylu BeReal jako tytuł sheetu (mocniejszy, ciaśniejszy `letterSpacing`).
+- Nagłówki bardziej bold; uproszczenie tekstów pomocniczych.
 
-### Etap 3 — Lokalizacja i wykrywanie wejścia
-- Pobieranie pozycji GPS (Capacitor Geolocation).
-- Wykrywanie wejścia w obszar miejsca (geofence) — wysyłka pinga do wybranych znajomych.
-- Zapis historii pingów.
+### 3. Ikony i przyciski
+- Zamiana ozdobnych glifów w `TABS` (`◈ ◉ ◎ ◇`) i nagłówku map na **proste ikony liniowe** (cienkie SVG: pin/mapa, lista, ludzie, profil) — spójne, minimalistyczne.
+- Przyciski (`SmallButton`, główny CTA): płaskie, czarno-białe. CTA „Zaplanuj spotkanie" → biały przycisk z czarnym tekstem (odpowiednik czarno-białych przycisków BeReal) zamiast zielonego.
+- `Toggle`: stan włączony na biały zamiast zielonego.
 
-### Etap 4 — Powiadomienia push
-- Konfiguracja push (Capacitor Push Notifications / Firebase Cloud Messaging dla Androida, APNs dla iOS).
-- Funkcja serwerowa wysyłająca push do znajomych po wykryciu wejścia.
+### 4. Powierzchnie i krawędzie
+- Karty/sheet: bardziej płaskie, subtelniejsze obramowania, łagodniejsze cienie. Zachowujemy zaokrąglenia sheetu i tab bara (układ bez zmian).
+- Tło mapy: wyciszenie zieleni do ciemnej, neutralnej szarości z delikatnymi drogami — żeby treść (piny, osoby) była bohaterem.
 
-### Etap 5 — Capacitor / pakowanie natywne
-- Dodanie Capacitora i konfiguracja iOS/Android.
-- Instrukcja: jak na swoim komputerze zbudować i przetestować apkę oraz wysłać do sklepów.
+### Co zostaje bez zmian
+- Cała logika i interakcje: wysuwany sheet (drag), nawigacja, fokus pinów, dołączanie do aktywności, udostępnianie z kontaktów, kopiowanie numeru.
+- Struktura zakładek i layout elementów (użytkownikowi podoba się rozmieszczenie).
 
 ## Szczegóły techniczne
-- **Frontend:** React + TanStack Start, Tailwind, mobile-first.
-- **Mapa:** Mapbox lub Leaflet (do ustalenia — Mapbox wymaga klucza API).
-- **Push w tle / geofencing w tle:** na iOS/Android działa w pełni dopiero w wersji natywnej (Capacitor), nie w podglądzie webowym.
-- **GPS w tle** wymaga osobnych uprawnień systemowych — uwzględnimy konfigurację.
+- Zmiany wyłącznie w `src/runda/theme.ts` (tokeny kolorów) i `src/runda/RundaApp.tsx` (typografia, ikony SVG, warianty przycisków/toggle, tło mapy).
+- Bez zmian w danych (`mock.ts`), routingu i logice stanu.
+- Weryfikacja w podglądzie mobilnym (402×717) po wdrożeniu.
 
-## Co potrzebuję od Ciebie po akceptacji
-1. Czy przenosimy konkretny kod z GitHuba (wklejasz pliki) czy budujemy od zera wg tego planu?
-2. Mapa: Mapbox (ładniejsza, wymaga darmowego klucza API) czy Leaflet/OpenStreetMap (bez klucza)?
-
-Po akceptacji zaczynam od Etapu 1 (Lovable Cloud + logowanie).
+## Pytanie otwarte
+Zieleń jako kolor „online"/akcent — usuwamy całkowicie na rzecz czerni/bieli (czyściej, bliżej BeReal), czy zostawiamy zieloną kropkę statusu jako jedyny mikro-akcent? Domyślnie planuję to drugie (maksymalna monochromia z jednym subtelnym sygnałem).
