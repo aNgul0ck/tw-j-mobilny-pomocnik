@@ -580,13 +580,14 @@ export default function RundaApp() {
         }}>
           {TABS.map(tab => {
             const isActive = active === tab.key;
+            const Icon = tab.icon;
             return (
               <button key={tab.key} onClick={() => selectTab(tab.key)} style={{
                 flex: 1, background: 'none', border: 'none', cursor: 'pointer',
-                display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4,
+                display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 5,
                 fontFamily: FONT, padding: 0,
               }}>
-                <span style={{ fontSize: 20, color: isActive ? C.accent : C.textTert, transition: 'color .2s' }}>{tab.icon}</span>
+                <Icon size={21} strokeWidth={isActive ? 2.4 : 1.8} color={isActive ? C.text : C.textTert} style={{ transition: 'color .2s' }} />
                 <span style={{ fontSize: 10, fontWeight: isActive ? 600 : 500, color: isActive ? C.text : C.textTert }}>{tab.label}</span>
               </button>
             );
