@@ -1,7 +1,11 @@
 import { useState, useRef, useLayoutEffect } from 'react';
 import {
+  MapPin, ListChecks, Users, User,
+  Navigation, Layers, Plus, type LucideIcon,
+} from 'lucide-react';
+import {
   C, ACTIVITY_TYPE_LABELS, ACTIVITY_TYPE_ICONS, ACTIVITY_TYPE_COLORS,
-  PLACE_TYPE_COLORS, getInitials, avatarColor,
+  getInitials, avatarColor,
 } from './theme';
 import {
   me, friends, activities, pendingRequests, contacts,
@@ -12,18 +16,18 @@ const FONT = "'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif
 
 const GLASS: React.CSSProperties = {
   background: C.surface,
-  backdropFilter: 'blur(28px) saturate(180%)',
-  WebkitBackdropFilter: 'blur(28px) saturate(180%)',
+  backdropFilter: 'blur(20px)',
+  WebkitBackdropFilter: 'blur(20px)',
   border: `0.5px solid ${C.border}`,
 };
 
 type Tab = 'map' | 'feed' | 'friends' | 'profile';
 
-const TABS: { key: Tab; label: string; icon: string }[] = [
-  { key: 'map', label: 'Osoby', icon: '◈' },
-  { key: 'feed', label: 'Aktywności', icon: '◉' },
-  { key: 'friends', label: 'Znajomi', icon: '◎' },
-  { key: 'profile', label: 'Ja', icon: '◇' },
+const TABS: { key: Tab; label: string; icon: LucideIcon }[] = [
+  { key: 'map', label: 'Osoby', icon: MapPin },
+  { key: 'feed', label: 'Aktywności', icon: ListChecks },
+  { key: 'friends', label: 'Znajomi', icon: Users },
+  { key: 'profile', label: 'Ja', icon: User },
 ];
 
 const SHEET_TITLE: Record<Tab, string> = {
@@ -50,7 +54,7 @@ function Avatar({ initials, color, size = 40, online }: { initials: string; colo
       {online && (
         <div style={{
           position: 'absolute', bottom: 0, right: 0, width: size * 0.28, height: size * 0.28,
-          borderRadius: size, background: C.accent, border: '2px solid #0E1512',
+          borderRadius: size, background: C.online, border: '2px solid #000',
         }} />
       )}
     </div>
@@ -96,9 +100,10 @@ function Toggle({ on, onChange }: { on: boolean; onChange: () => void }) {
       transition: 'background .2s', flexShrink: 0,
     }}>
       <span style={{
-        width: 26, height: 26, borderRadius: 13, background: '#fff',
+        width: 26, height: 26, borderRadius: 13, background: on ? '#000' : '#fff',
         boxShadow: '0 2px 6px rgba(0,0,0,0.3)', transition: 'all .2s',
       }} />
+
     </button>
   );
 }
@@ -228,8 +233,8 @@ function OsobyContent({ onFocus, onPlan }: { onFocus: (id: string) => void; onPl
 
       <button onClick={onPlan} style={{
         width: '100%', padding: '16px', borderRadius: 16, border: 'none',
-        background: C.accent, color: '#06210f', fontWeight: 700, fontSize: 15,
-        cursor: 'pointer', fontFamily: FONT, boxShadow: `0 8px 24px ${C.accentBg}`,
+        background: '#fff', color: '#000', fontWeight: 800, fontSize: 15, letterSpacing: -0.2,
+        cursor: 'pointer', fontFamily: FONT, boxShadow: '0 8px 24px rgba(0,0,0,0.4)',
       }}>Zaplanuj spotkanie</button>
     </>
   );
@@ -388,31 +393,31 @@ function MapBackground({ active, selected, onSelect, onRecenter }: {
 }) {
   return (
     <div style={{ position: 'absolute', inset: 0, overflow: 'hidden' }}>
-      {/* dark green map */}
+      {/* neutral dark map */}
       <div onClick={() => onSelect(null)} style={{
         position: 'absolute', inset: 0,
-        background: 'radial-gradient(120% 90% at 50% 25%, #2e4138 0%, #243029 55%, #18211c 100%)',
+        background: 'radial-gradient(120% 90% at 50% 25%, #1c1c1c 0%, #131313 55%, #000000 100%)',
       }} />
       {/* faint roads */}
-      <svg style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', opacity: 0.5, pointerEvents: 'none' }} preserveAspectRatio="none" viewBox="0 0 390 700">
-        <g stroke="rgba(255,255,255,0.12)" strokeWidth="2" fill="none">
+      <svg style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', opacity: 0.4, pointerEvents: 'none' }} preserveAspectRatio="none" viewBox="0 0 390 700">
+        <g stroke="rgba(255,255,255,0.10)" strokeWidth="2" fill="none">
           <path d="M-20 180 Q120 220 200 120 T420 90" />
           <path d="M40 -20 Q90 200 60 400 T120 720" />
           <path d="M-20 480 Q160 440 260 520 T430 470" />
           <path d="M260 -20 Q300 220 360 320 T420 640" />
         </g>
-        <path d="M40 -20 Q90 200 60 400 T120 720" stroke="rgba(90,140,250,0.4)" strokeWidth="2.5" fill="none" />
+        <path d="M40 -20 Q90 200 60 400 T120 720" stroke="rgba(255,255,255,0.18)" strokeWidth="2.5" fill="none" />
       </svg>
+
 
       {/* my location dot */}
       <div style={{ position: 'absolute', top: '32%', left: '46%', pointerEvents: 'none' }}>
-        <div style={{ width: 22, height: 22, borderRadius: 11, background: '#0A84FF', border: '3px solid #fff', boxShadow: '0 0 0 6px rgba(10,132,255,0.25), 0 4px 12px rgba(0,0,0,0.4)' }} />
+        <div style={{ width: 22, height: 22, borderRadius: 11, background: '#fff', border: '3px solid #000', boxShadow: '0 0 0 6px rgba(255,255,255,0.16), 0 4px 12px rgba(0,0,0,0.5)' }} />
+
       </div>
 
       {/* friend pins (people sharing location) */}
       {active === 'map' && sharing.map((f, i) => {
-        const a = f.activity;
-        const col = a?.place ? (PLACE_TYPE_COLORS[a.place.type] ?? C.accent) : C.accent;
         const isSel = selected === f.profile.id;
         return (
           <button
@@ -424,14 +429,14 @@ function MapBackground({ active, selected, onSelect, onRecenter }: {
             }}
           >
             <div style={{
-              ...GLASS, background: isSel ? 'rgba(48,209,88,0.28)' : C.surfaceSolid,
-              border: `0.5px solid ${isSel ? col : C.border}`,
+              ...GLASS, background: isSel ? '#fff' : C.surfaceSolid,
+              border: `0.5px solid ${isSel ? '#fff' : C.border}`,
               borderRadius: 999, padding: '5px 12px 5px 8px',
               display: 'flex', alignItems: 'center', gap: 7,
-              boxShadow: '0 6px 18px rgba(0,0,0,0.4)', fontFamily: FONT,
+              boxShadow: '0 6px 18px rgba(0,0,0,0.5)', fontFamily: FONT,
             }}>
-              <span style={{ width: 8, height: 8, borderRadius: 4, background: col }} />
-              <span style={{ fontSize: 13, fontWeight: 700, color: C.text }}>{f.profile.name.split(' ')[0]}</span>
+              <span style={{ width: 8, height: 8, borderRadius: 4, background: isSel ? '#000' : '#fff' }} />
+              <span style={{ fontSize: 13, fontWeight: 700, color: isSel ? '#000' : C.text }}>{f.profile.name.split(' ')[0]}</span>
             </div>
           </button>
         );
@@ -443,9 +448,9 @@ function MapBackground({ active, selected, onSelect, onRecenter }: {
         display: 'flex', flexDirection: 'column', overflow: 'hidden',
         boxShadow: '0 6px 20px rgba(0,0,0,0.35)',
       }}>
-        <button onClick={() => onSelect(null)} style={{ background: 'none', border: 'none', width: 44, height: 44, color: C.text, fontSize: 17, cursor: 'pointer' }}>⧉</button>
+        <button onClick={() => onSelect(null)} style={{ background: 'none', border: 'none', width: 44, height: 44, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}><Layers size={19} strokeWidth={1.8} color={C.text} /></button>
         <div style={{ height: 0.5, background: C.border }} />
-        <button onClick={onRecenter} style={{ background: 'none', border: 'none', width: 44, height: 44, color: C.accent, fontSize: 17, cursor: 'pointer' }}>➤</button>
+        <button onClick={onRecenter} style={{ background: 'none', border: 'none', width: 44, height: 44, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}><Navigation size={18} strokeWidth={1.8} color={C.text} fill={C.text} /></button>
       </div>
     </div>
   );
@@ -504,9 +509,9 @@ export default function RundaApp() {
   const acceptReq = (id: string) => setRequests(r => r.filter(x => x.id !== id));
 
   const headerAction = (() => {
-    if (active === 'feed') return <GlassIcon size={38} onClick={() => {}}>+</GlassIcon>;
+    if (active === 'feed') return <GlassIcon size={38} onClick={() => {}}><Plus size={18} strokeWidth={2.2} color={C.text} /></GlassIcon>;
     if (active === 'friends') return <SmallButton variant="green">Dodaj</SmallButton>;
-    if (active === 'profile') return <GlassIcon size={38} onClick={() => {}}>+</GlassIcon>;
+    if (active === 'profile') return <GlassIcon size={38} onClick={() => {}}><Plus size={18} strokeWidth={2.2} color={C.text} /></GlassIcon>;
     return null;
   })();
 
@@ -536,8 +541,8 @@ export default function RundaApp() {
           ref={sheetRef}
           style={{
             position: 'absolute', left: 0, right: 0, bottom: 86, top: 90,
-            ...GLASS, background: C.surfaceSolid, backdropFilter: 'blur(34px) saturate(180%)',
-            WebkitBackdropFilter: 'blur(34px) saturate(180%)',
+            ...GLASS, background: C.surfaceSolid, backdropFilter: 'blur(28px)',
+            WebkitBackdropFilter: 'blur(28px)',
             borderRadius: 30,
             boxShadow: '0 -12px 40px rgba(0,0,0,0.5)',
             transform: `translateY(${translate}px)`,
@@ -554,7 +559,7 @@ export default function RundaApp() {
           >
             <div style={{ width: 38, height: 5, borderRadius: 3, background: 'rgba(255,255,255,0.22)', margin: '0 auto 14px' }} />
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <div style={{ fontSize: 28, fontWeight: 800, color: C.text, letterSpacing: -0.8 }}>{SHEET_TITLE[active]}</div>
+              <div style={{ fontSize: 28, fontWeight: 800, color: C.text, letterSpacing: -1 }}>{SHEET_TITLE[active]}<span style={{ color: C.text }}>.</span></div>
               {headerAction}
             </div>
           </div>
@@ -570,19 +575,20 @@ export default function RundaApp() {
         {/* glass tab bar */}
         <div style={{
           position: 'absolute', left: 16, right: 16, bottom: 18, borderRadius: 26,
-          ...GLASS, background: 'rgba(20,23,24,0.6)',
-          backdropFilter: 'blur(30px) saturate(180%)', WebkitBackdropFilter: 'blur(30px) saturate(180%)',
+          ...GLASS, background: 'rgba(12,12,12,0.72)',
+          backdropFilter: 'blur(24px)', WebkitBackdropFilter: 'blur(24px)',
           boxShadow: '0 10px 34px rgba(0,0,0,0.45)', display: 'flex', padding: '11px 8px', zIndex: 10,
         }}>
           {TABS.map(tab => {
             const isActive = active === tab.key;
+            const Icon = tab.icon;
             return (
               <button key={tab.key} onClick={() => selectTab(tab.key)} style={{
                 flex: 1, background: 'none', border: 'none', cursor: 'pointer',
-                display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4,
+                display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 5,
                 fontFamily: FONT, padding: 0,
               }}>
-                <span style={{ fontSize: 20, color: isActive ? C.accent : C.textTert, transition: 'color .2s' }}>{tab.icon}</span>
+                <Icon size={21} strokeWidth={isActive ? 2.4 : 1.8} color={isActive ? C.text : C.textTert} style={{ transition: 'color .2s' }} />
                 <span style={{ fontSize: 10, fontWeight: isActive ? 600 : 500, color: isActive ? C.text : C.textTert }}>{tab.label}</span>
               </button>
             );
