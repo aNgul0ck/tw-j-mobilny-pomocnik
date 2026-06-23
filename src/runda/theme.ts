@@ -82,14 +82,15 @@ export const ACTIVITY_TYPE_ICONS: Record<ActivityType, string> = {
   inne: '·',
 };
 
+// Someone's activity is the one element allowed to carry color (green).
 export const ACTIVITY_TYPE_COLORS: Record<ActivityType, string> = {
-  kawa: '#FFFFFF',
-  spacer: '#FFFFFF',
-  siłownia: '#FFFFFF',
-  plac_zabaw: '#FFFFFF',
-  galeria: '#FFFFFF',
-  coworking: '#FFFFFF',
-  rower: '#FFFFFF',
+  kawa: '#30D158',
+  spacer: '#30D158',
+  siłownia: '#30D158',
+  plac_zabaw: '#30D158',
+  galeria: '#30D158',
+  coworking: '#30D158',
+  rower: '#30D158',
   zakupy: '#FFFFFF',
   wydarzenie: '#FFFFFF',
   inne: '#FFFFFF',
