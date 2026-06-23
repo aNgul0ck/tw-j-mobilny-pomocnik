@@ -416,28 +416,41 @@ function MapBackground({ active, selected, onSelect, onRecenter }: {
 
       </div>
 
-      {/* friend pins (people sharing location) */}
+      {/* friend pins (people sharing location) — round avatar markers */}
       {active === 'map' && sharing.map((f, i) => {
         const isSel = selected === f.profile.id;
+        const size = 48;
         return (
           <button
             key={f.profile.id}
             onClick={(e) => { e.stopPropagation(); onSelect(isSel ? null : f.profile.id); }}
             style={{
-              position: 'absolute', ...PIN_POS[i % 3], transform: `translate(-50%,-100%) scale(${isSel ? 1.08 : 1})`,
+              position: 'absolute', ...PIN_POS[i % 3], transform: `translate(-50%,-50%) scale(${isSel ? 1.12 : 1})`,
               transition: 'transform .15s', background: 'none', border: 'none', cursor: 'pointer', padding: 0,
+              display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6, fontFamily: FONT,
             }}
           >
-            <div style={{
-              ...GLASS, background: isSel ? '#fff' : C.surfaceSolid,
-              border: `0.5px solid ${isSel ? '#fff' : C.border}`,
-              borderRadius: 999, padding: '5px 12px 5px 8px',
-              display: 'flex', alignItems: 'center', gap: 7,
-              boxShadow: '0 6px 18px rgba(0,0,0,0.5)', fontFamily: FONT,
-            }}>
-              <span style={{ width: 8, height: 8, borderRadius: 4, background: isSel ? '#000' : '#fff' }} />
-              <span style={{ fontSize: 13, fontWeight: 700, color: isSel ? '#000' : C.text }}>{f.profile.name.split(' ')[0]}</span>
+            <div style={{ position: 'relative', width: size, height: size }}>
+              <div style={{
+                width: size, height: size, borderRadius: size / 2, background: f.color,
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                color: '#fff', fontWeight: 700, fontSize: size * 0.36,
+                border: `2.5px solid ${isSel ? '#fff' : '#000'}`,
+                boxShadow: isSel
+                  ? '0 0 0 3px rgba(255,255,255,0.9), 0 8px 22px rgba(0,0,0,0.55)'
+                  : '0 6px 18px rgba(0,0,0,0.55)',
+              }}>{f.initials}</div>
+              {f.online && (
+                <div style={{
+                  position: 'absolute', bottom: 1, right: 1, width: size * 0.26, height: size * 0.26,
+                  borderRadius: size, background: C.online, border: '2px solid #000',
+                }} />
+              )}
             </div>
+            <span style={{
+              fontSize: 11.5, fontWeight: 700, color: '#fff', padding: '2px 8px', borderRadius: 999,
+              background: 'rgba(0,0,0,0.55)', backdropFilter: 'blur(8px)', WebkitBackdropFilter: 'blur(8px)',
+            }}>{f.profile.name.split(' ')[0]}</span>
           </button>
         );
       })}
@@ -463,8 +476,7 @@ export default function RundaApp() {
   const [joined, setJoined] = useState<Record<string, boolean>>({});
   const [requests, setRequests] = useState<Profile[]>(pendingRequests);
 
-  // Draggable bottom sheet — shared across all tabs
-  const PEEK = 150;
+  // Draggable bottom sheet — fully hidden behind the nav bar when collapsed.
   const sheetRef = useRef<HTMLDivElement>(null);
   const [sheetH, setSheetH] = useState(560);
   const [expanded, setExpanded] = useState(false);
@@ -474,8 +486,10 @@ export default function RundaApp() {
     if (sheetRef.current) setSheetH(sheetRef.current.offsetHeight);
   }, []);
 
-  const collapsedT = Math.max(0, sheetH - PEEK);
-  const baseT = expanded ? 0 : collapsedT;
+  // Collapsed → translate the whole sheet down past its own height so it
+  // disappears behind the (higher z-index) nav bar; only the bar stays visible.
+  const hiddenT = sheetH + 120;
+  const baseT = expanded ? 0 : hiddenT;
   const translate = drag ? drag.t : baseT;
 
   const onPointerDown = (e: React.PointerEvent) => {
@@ -484,16 +498,21 @@ export default function RundaApp() {
   };
   const onPointerMove = (e: React.PointerEvent) => {
     if (!drag) return;
-    const next = Math.min(collapsedT, Math.max(0, drag.baseT + (e.clientY - drag.startY)));
+    const next = Math.min(hiddenT, Math.max(0, drag.baseT + (e.clientY - drag.startY)));
     setDrag({ ...drag, t: next });
   };
   const onPointerUp = () => {
     if (!drag) return;
-    setExpanded(drag.t < collapsedT / 2);
+    setExpanded(drag.t < hiddenT / 2);
     setDrag(null);
   };
 
   const selectTab = (key: Tab) => {
+    // Re-tapping the open tab closes the sheet (back to map + nav bar only).
+    if (key === active && expanded) {
+      setExpanded(false);
+      return;
+    }
     setActive(key);
     setExpanded(true);
   };
@@ -580,7 +599,7 @@ export default function RundaApp() {
           boxShadow: '0 10px 34px rgba(0,0,0,0.45)', display: 'flex', padding: '11px 8px', zIndex: 10,
         }}>
           {TABS.map(tab => {
-            const isActive = active === tab.key;
+            const isActive = active === tab.key && expanded;
             const Icon = tab.icon;
             return (
               <button key={tab.key} onClick={() => selectTab(tab.key)} style={{
