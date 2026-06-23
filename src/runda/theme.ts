@@ -82,16 +82,16 @@ export const ACTIVITY_TYPE_ICONS: Record<ActivityType, string> = {
 };
 
 export const ACTIVITY_TYPE_COLORS: Record<ActivityType, string> = {
-  kawa: '#C4944A',
-  spacer: '#4A9E6A',
-  siłownia: '#C44A4A',
-  plac_zabaw: '#5A8FC4',
-  galeria: '#8B6EC4',
-  coworking: '#6A82A0',
-  rower: '#4A8A6A',
-  zakupy: '#C46E5A',
-  wydarzenie: '#C4A84A',
-  inne: '#9A9A9A',
+  kawa: '#FFFFFF',
+  spacer: '#FFFFFF',
+  siłownia: '#FFFFFF',
+  plac_zabaw: '#FFFFFF',
+  galeria: '#FFFFFF',
+  coworking: '#FFFFFF',
+  rower: '#FFFFFF',
+  zakupy: '#FFFFFF',
+  wydarzenie: '#FFFFFF',
+  inne: '#FFFFFF',
 };
 
 export const PLACE_TYPE_LABELS: Record<string, string> = {
@@ -102,8 +102,9 @@ export const PLACE_TYPE_LABELS: Record<string, string> = {
 };
 
 export const PLACE_TYPE_COLORS: Record<string, string> = {
-  bar: '#C46E5A', cafe: '#C4944A', park: '#4A9E6A',
-  playground: '#5A8FC4', campus: '#8B6EC4',
-  gym: '#C46E8B', museum: '#4AABAB',
-  restaurant: '#C4944A', other: '#9A9A9A',
+  bar: '#FFFFFF', cafe: '#FFFFFF', park: '#FFFFFF',
+  playground: '#FFFFFF', campus: '#FFFFFF',
+  gym: '#FFFFFF', museum: '#FFFFFF',
+  restaurant: '#FFFFFF', other: '#FFFFFF',
 };
+
