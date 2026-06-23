@@ -412,7 +412,8 @@ function MapBackground({ active, selected, onSelect, onRecenter }: {
 
       {/* my location dot */}
       <div style={{ position: 'absolute', top: '32%', left: '46%', pointerEvents: 'none' }}>
-        <div style={{ width: 22, height: 22, borderRadius: 11, background: '#0A84FF', border: '3px solid #fff', boxShadow: '0 0 0 6px rgba(10,132,255,0.25), 0 4px 12px rgba(0,0,0,0.4)' }} />
+        <div style={{ width: 22, height: 22, borderRadius: 11, background: '#fff', border: '3px solid #000', boxShadow: '0 0 0 6px rgba(255,255,255,0.16), 0 4px 12px rgba(0,0,0,0.5)' }} />
+
       </div>
 
       {/* friend pins (people sharing location) */}
