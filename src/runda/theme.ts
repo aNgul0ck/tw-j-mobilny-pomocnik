@@ -91,9 +91,9 @@ export const ACTIVITY_TYPE_COLORS: Record<ActivityType, string> = {
   galeria: '#30D158',
   coworking: '#30D158',
   rower: '#30D158',
-  zakupy: '#FFFFFF',
-  wydarzenie: '#FFFFFF',
-  inne: '#FFFFFF',
+  zakupy: '#30D158',
+  wydarzenie: '#30D158',
+  inne: '#30D158',
 };
 
 export const PLACE_TYPE_LABELS: Record<string, string> = {
