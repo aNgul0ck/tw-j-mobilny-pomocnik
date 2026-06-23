@@ -575,8 +575,8 @@ export default function RundaApp() {
         {/* glass tab bar */}
         <div style={{
           position: 'absolute', left: 16, right: 16, bottom: 18, borderRadius: 26,
-          ...GLASS, background: 'rgba(20,23,24,0.6)',
-          backdropFilter: 'blur(30px) saturate(180%)', WebkitBackdropFilter: 'blur(30px) saturate(180%)',
+          ...GLASS, background: 'rgba(12,12,12,0.72)',
+          backdropFilter: 'blur(24px)', WebkitBackdropFilter: 'blur(24px)',
           boxShadow: '0 10px 34px rgba(0,0,0,0.45)', display: 'flex', padding: '11px 8px', zIndex: 10,
         }}>
           {TABS.map(tab => {
