@@ -1,16 +1,25 @@
 import { useState, useRef, useLayoutEffect } from 'react';
 import {
   MapPin, ListChecks, Users, User,
-  Navigation, Layers, Plus, type LucideIcon,
+  Navigation, Layers, Plus, Heart, MessageCircle, Send, X, type LucideIcon,
 } from 'lucide-react';
 import {
-  C, ACTIVITY_TYPE_LABELS, ACTIVITY_TYPE_ICONS, ACTIVITY_TYPE_COLORS,
+  C, ACTIVITY_TYPE_LABELS, ACTIVITY_TYPE_ICONS,
   getInitials, avatarColor,
 } from './theme';
 import {
   me, friends, activities, pendingRequests, contacts,
-  Activity, FriendWithStatus, Profile, Contact,
+  Activity, FriendWithStatus, Profile, Contact, Comment,
 } from './mock';
+
+// "8 min temu" style relative time.
+function timeAgo(iso: string): string {
+  const min = Math.max(0, Math.round((Date.now() - new Date(iso).getTime()) / 60000));
+  if (min < 1) return 'teraz';
+  if (min < 60) return `${min} min temu`;
+  const h = Math.round(min / 60);
+  return `${h} godz. temu`;
+}
 
 const FONT = "'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif";
 
@@ -133,62 +142,136 @@ function GlassIcon({ children, onClick, size = 44 }: { children: React.ReactNode
   );
 }
 
-// ── Activity card (Aktywności) ─────────────────────────────────
-function ActivityCard({ activity, mine, joined, onToggleJoin }: {
+// ── Interaction state per post (likes / comments) ──────────────
+export interface PostState { liked: boolean; likeCount: number; comments: Comment[] }
+export type Interactions = {
+  get: (id: string) => PostState;
+  toggleLike: (id: string) => void;
+  addComment: (id: string, text: string) => void;
+};
+
+// ── Comments thread ────────────────────────────────────────────
+function CommentsThread({ comments, onAdd }: { comments: Comment[]; onAdd: (text: string) => void }) {
+  const [text, setText] = useState('');
+  const submit = () => {
+    const t = text.trim();
+    if (!t) return;
+    onAdd(t);
+    setText('');
+  };
+  return (
+    <div style={{ marginTop: 12, paddingTop: 12, borderTop: `0.5px solid ${C.borderLight}` }}>
+      {comments.map(c => (
+        <div key={c.id} style={{ display: 'flex', gap: 9, marginBottom: 10 }}>
+          <Avatar initials={getInitials(c.profile.name)} color={avatarColor(c.profile.id)} size={28} />
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <span style={{ fontSize: 13, fontWeight: 600, color: C.text }}>{c.profile.name.split(' ')[0]} </span>
+            <span style={{ fontSize: 13, color: C.textSec }}>{c.text}</span>
+            <div style={{ fontSize: 11, color: C.textTert, marginTop: 1 }}>{timeAgo(c.created_at)}</div>
+          </div>
+        </div>
+      ))}
+      <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginTop: comments.length ? 4 : 0 }}>
+        <input
+          value={text}
+          onChange={e => setText(e.target.value)}
+          onKeyDown={e => { if (e.key === 'Enter') submit(); }}
+          placeholder="Dodaj komentarz…"
+          style={{
+            flex: 1, background: 'rgba(255,255,255,0.06)', border: `0.5px solid ${C.border}`,
+            borderRadius: 999, padding: '9px 14px', color: C.text, fontSize: 13, fontFamily: FONT, outline: 'none',
+          }}
+        />
+        <button onClick={submit} disabled={!text.trim()} style={{
+          background: 'none', border: 'none', cursor: text.trim() ? 'pointer' : 'default',
+          color: text.trim() ? C.text : C.textTert, display: 'flex', padding: 6,
+        }}><Send size={18} strokeWidth={2} /></button>
+      </div>
+    </div>
+  );
+}
+
+// ── Activity post (feed / tablica aktualności) ─────────────────
+function ActivityPost({ activity, mine, joined, onToggleJoin, interactions, defaultOpenComments }: {
   activity: Activity; mine?: boolean; joined?: boolean; onToggleJoin?: () => void;
+  interactions: Interactions; defaultOpenComments?: boolean;
 }) {
-  const col = ACTIVITY_TYPE_COLORS[activity.activity_type];
   const icon = ACTIVITY_TYPE_ICONS[activity.activity_type];
   const label = ACTIVITY_TYPE_LABELS[activity.activity_type];
   const place = activity.place?.name ?? activity.custom_place;
+  const st = interactions.get(activity.id);
+  const [openComments, setOpenComments] = useState(!!defaultOpenComments);
+
   const timingMap = {
-    now: { t: 'Teraz', c: C.textSec, bg: C.soonBg, dot: true },
-    soon: { t: 'Za chwilę', c: C.soon, bg: C.soonBg, dot: false },
-    planned: { t: 'Planowane', c: C.planned, bg: C.plannedBg, dot: false },
+    now: { t: 'Teraz', dot: true },
+    soon: { t: 'Za chwilę', dot: false },
+    planned: { t: 'Planowane', dot: false },
   }[activity.timing];
+
+  const joinCount = activity.joins.length + (joined ? 1 : 0);
 
   return (
     <Card style={{ marginBottom: 12, padding: 16 }}>
-      <div style={{ display: 'flex', gap: 13, alignItems: 'flex-start' }}>
-        <div style={{
-          width: 46, height: 46, borderRadius: 14, background: col + '26',
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-          fontSize: 21, color: col, border: `0.5px solid ${col}40`,
-        }}>{icon}</div>
+      {/* header: who posted */}
+      <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
+        <Avatar initials={mine ? getInitials(me.name) : getInitials(activity.profile.name)} color={mine ? avatarColor(me.id) : avatarColor(activity.profile.id)} size={42} online={activity.timing === 'now'} />
         <div style={{ flex: 1, minWidth: 0 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <span style={{ fontWeight: 700, fontSize: 16, color: C.text }}>
-              {mine ? 'Ty' : activity.profile.name}
-            </span>
-            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5, fontSize: 11, fontWeight: 600, color: timingMap.c, background: timingMap.bg, padding: '3px 9px', borderRadius: 999 }}>
+            <span style={{ fontWeight: 700, fontSize: 15.5, color: C.text }}>{mine ? 'Ty' : activity.profile.name}</span>
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5, fontSize: 11, fontWeight: 600, color: C.textSec, background: C.soonBg, padding: '3px 9px', borderRadius: 999 }}>
               {timingMap.dot && <span style={{ width: 6, height: 6, borderRadius: 3, background: C.online }} />}
               {timingMap.t}
             </span>
           </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginTop: 4 }}>
-            <span style={{ fontWeight: 600, fontSize: 14, color: C.textSec }}>{label}</span>
-            {place && <span style={{ fontSize: 13.5, color: C.textTert }}>· {place}</span>}
-          </div>
-          {activity.message && (
-            <div style={{ fontSize: 13.5, color: C.textSec, fontStyle: 'italic', marginTop: 7 }}>"{activity.message}"</div>
-          )}
-          {(activity.joins.length > 0 || joined) && (
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 11 }}>
-              <span style={{ fontSize: 12.5, color: C.textSec }}>
-                {activity.joins.length + (joined ? 1 : 0)} dołącza{joined ? ' (Ty)' : ''}
-              </span>
-            </div>
-          )}
+          <div style={{ fontSize: 12, color: C.textTert, marginTop: 2 }}>{timeAgo(activity.created_at)}</div>
         </div>
-        <div style={{ alignSelf: 'center' }}>
-          {mine
-            ? <SmallButton variant="danger">Zakończ</SmallButton>
-            : <SmallButton variant={joined ? 'plain' : 'green'} onClick={onToggleJoin}>{joined ? 'Anuluj' : 'Dołącz'}</SmallButton>}
-        </div>
+        {mine
+          ? <SmallButton variant="danger">Zakończ</SmallButton>
+          : <SmallButton variant={joined ? 'plain' : 'green'} onClick={onToggleJoin}>{joined ? 'Idziesz ✓' : 'Dołącz'}</SmallButton>}
       </div>
+
+      {/* body: activity + message */}
+      <div style={{ marginTop: 12 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
+          <span style={{ fontSize: 16 }}>{icon}</span>
+          <span style={{ fontWeight: 700, fontSize: 15, color: C.text }}>{label}</span>
+          {place && <span style={{ fontSize: 13.5, color: C.textTert }}>· {place}</span>}
+        </div>
+        {activity.message && (
+          <div style={{ fontSize: 14.5, color: C.text, marginTop: 8, lineHeight: 1.4 }}>{activity.message}</div>
+        )}
+        {joinCount > 0 && (
+          <div style={{ fontSize: 12.5, color: C.textSec, marginTop: 10 }}>
+            {joinCount} dołącza{joined ? ' · w tym Ty' : ''}
+          </div>
+        )}
+      </div>
+
+      {/* actions: like / comment */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 20, marginTop: 14 }}>
+        <button onClick={() => interactions.toggleLike(activity.id)} style={{
+          background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 7,
+          color: st.liked ? C.danger : C.textSec, fontFamily: FONT, fontSize: 13.5, fontWeight: 600, padding: 0,
+        }}>
+          <Heart size={19} strokeWidth={2} fill={st.liked ? C.danger : 'none'} />
+          {st.likeCount > 0 && st.likeCount}
+        </button>
+        <button onClick={() => setOpenComments(v => !v)} style={{
+          background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 7,
+          color: openComments ? C.text : C.textSec, fontFamily: FONT, fontSize: 13.5, fontWeight: 600, padding: 0,
+        }}>
+          <MessageCircle size={19} strokeWidth={2} />
+          {st.comments.length > 0 && st.comments.length}
+        </button>
+      </div>
+
+      {openComments && (
+        <CommentsThread comments={st.comments} onAdd={text => interactions.addComment(activity.id, text)} />
+      )}
     </Card>
   );
 }
+
 
 // ── Tab content: Osoby (live location) ─────────────────────────
 function OsobyContent({ onFocus, onPlan }: { onFocus: (id: string) => void; onPlan: () => void }) {
@@ -221,7 +304,7 @@ function OsobyContent({ onFocus, onPlan }: { onFocus: (id: string) => void; onPl
                 <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginTop: 2 }}>
                   {a ? (
                     <>
-                      <span style={{ fontSize: 12, color: ACTIVITY_TYPE_COLORS[a.activity_type] }}>{ACTIVITY_TYPE_ICONS[a.activity_type]}</span>
+                      <span style={{ fontSize: 12 }}>{ACTIVITY_TYPE_ICONS[a.activity_type]}</span>
                       <span style={{ fontSize: 13, fontWeight: 600, color: C.textSec }}>{ACTIVITY_TYPE_LABELS[a.activity_type]}</span>
                       {a.place && <span style={{ fontSize: 12.5, color: C.textTert }}>· {a.place.name}</span>}
                     </>
@@ -243,12 +326,14 @@ function OsobyContent({ onFocus, onPlan }: { onFocus: (id: string) => void; onPl
   );
 }
 
-// ── Tab content: Aktywności ────────────────────────────────────
-function FeedContent({ joined, onToggleJoin }: { joined: Record<string, boolean>; onToggleJoin: (id: string) => void }) {
+// ── Tab content: Aktywności (tablica aktualności) ──────────────
+function FeedContent({ joined, onToggleJoin, interactions }: {
+  joined: Record<string, boolean>; onToggleJoin: (id: string) => void; interactions: Interactions;
+}) {
   return (
     <>
       {activities.map(a => (
-        <ActivityCard key={a.id} activity={a} joined={!!joined[a.id]} onToggleJoin={() => onToggleJoin(a.id)} />
+        <ActivityPost key={a.id} activity={a} joined={!!joined[a.id]} onToggleJoin={() => onToggleJoin(a.id)} interactions={interactions} />
       ))}
     </>
   );
@@ -479,6 +564,26 @@ export default function RundaApp() {
   const [joined, setJoined] = useState<Record<string, boolean>>({});
   const [requests, setRequests] = useState<Profile[]>(pendingRequests);
 
+  // Likes / comments per activity (tablica aktualności interactions).
+  const [likedMap, setLikedMap] = useState<Record<string, boolean>>({});
+  const [extraComments, setExtraComments] = useState<Record<string, Comment[]>>({});
+  const interactions: Interactions = {
+    get: (id) => {
+      const a = activities.find(x => x.id === id);
+      const liked = !!likedMap[id];
+      return {
+        liked,
+        likeCount: (a?.likes ?? 0) + (liked ? 1 : 0),
+        comments: [...(a?.comments ?? []), ...(extraComments[id] ?? [])],
+      };
+    },
+    toggleLike: (id) => setLikedMap(m => ({ ...m, [id]: !m[id] })),
+    addComment: (id, text) => setExtraComments(m => ({
+      ...m,
+      [id]: [...(m[id] ?? []), { id: `c-${Date.now()}`, profile: me, text, created_at: new Date().toISOString() }],
+    })),
+  };
+
   // Draggable bottom sheet — fully hidden behind the nav bar when collapsed.
   const sheetRef = useRef<HTMLDivElement>(null);
   const [sheetH, setSheetH] = useState(560);
@@ -529,6 +634,7 @@ export default function RundaApp() {
 
   const toggleJoin = (id: string) => setJoined(j => ({ ...j, [id]: !j[id] }));
   const acceptReq = (id: string) => setRequests(r => r.filter(x => x.id !== id));
+  const selectedFriend = selected ? friends.find(f => f.profile.id === selected) ?? null : null;
 
   const headerAction = (() => {
     if (active === 'feed') return <GlassIcon size={38} onClick={() => {}}><Plus size={18} strokeWidth={2.2} color={C.text} /></GlassIcon>;
@@ -557,6 +663,39 @@ export default function RundaApp() {
             <GlassIcon onClick={() => selectTab('profile')}>{me.name[0]}</GlassIcon>
           </div>
         </div>
+
+        {/* tapped a person on the map → detail + interactions card */}
+        {active === 'map' && selectedFriend && !expanded && (
+          <div style={{
+            position: 'absolute', left: 14, right: 14, bottom: 86, zIndex: 9,
+            animation: 'rundaSlideUp .26s cubic-bezier(.32,.72,0,1)',
+          }}>
+            <Card style={{ padding: 16, position: 'relative', boxShadow: '0 -10px 40px rgba(0,0,0,0.6)' }}>
+              <button onClick={() => setSelected(null)} style={{
+                position: 'absolute', top: 12, right: 12, background: 'rgba(255,255,255,0.08)',
+                border: 'none', borderRadius: 999, width: 30, height: 30, cursor: 'pointer',
+                display: 'flex', alignItems: 'center', justifyContent: 'center', color: C.textSec,
+              }}><X size={16} strokeWidth={2.2} /></button>
+              {selectedFriend.activity ? (
+                <ActivityPost
+                  activity={selectedFriend.activity}
+                  joined={!!joined[selectedFriend.activity.id]}
+                  onToggleJoin={() => toggleJoin(selectedFriend.activity!.id)}
+                  interactions={interactions}
+                />
+              ) : (
+                <div style={{ display: 'flex', alignItems: 'center', gap: 13 }}>
+                  <Avatar initials={selectedFriend.initials} color={selectedFriend.color} size={46} online={selectedFriend.online} />
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontSize: 16, fontWeight: 700, color: C.text }}>{selectedFriend.profile.name}</div>
+                    <div style={{ fontSize: 13, color: C.textTert, marginTop: 2 }}>Udostępnia położenie · w pobliżu</div>
+                  </div>
+                </div>
+              )}
+            </Card>
+          </div>
+        )}
+
 
         {/* draggable glass bottom sheet */}
         <div
@@ -588,7 +727,7 @@ export default function RundaApp() {
 
           <div style={{ flex: 1, overflowY: 'auto', padding: '8px 16px 24px' }} className="hide-scrollbar">
             {active === 'map' && <OsobyContent onFocus={focusFriend} onPlan={() => selectTab('feed')} />}
-            {active === 'feed' && <FeedContent joined={joined} onToggleJoin={toggleJoin} />}
+            {active === 'feed' && <FeedContent joined={joined} onToggleJoin={toggleJoin} interactions={interactions} />}
             {active === 'friends' && <FriendsContent requests={requests} onAccept={acceptReq} onReject={acceptReq} />}
             {active === 'profile' && <JaContent />}
           </div>
