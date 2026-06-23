@@ -117,18 +117,7 @@ function Toggle({ on, onChange }: { on: boolean; onChange: () => void }) {
   );
 }
 
-function Row({ label, value, onClick, divider = true }: { label: React.ReactNode; value?: React.ReactNode; onClick?: () => void; divider?: boolean }) {
-  return (
-    <div onClick={onClick} style={{
-      display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-      padding: '14px 16px', borderBottom: divider ? `0.5px solid ${C.borderLight}` : 'none',
-      cursor: onClick ? 'pointer' : 'default',
-    }}>
-      <span style={{ fontSize: 15, fontWeight: 500, color: C.text }}>{label}</span>
-      {value != null && <span style={{ fontSize: 15, color: C.textSec }}>{value}</span>}
-    </div>
-  );
-}
+
 
 // ── Round glass icon button ────────────────────────────────────
 function GlassIcon({ children, onClick, size = 44 }: { children: React.ReactNode; onClick?: () => void; size?: number }) {
