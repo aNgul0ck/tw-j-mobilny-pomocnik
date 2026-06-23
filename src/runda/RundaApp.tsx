@@ -54,7 +54,7 @@ function Avatar({ initials, color, size = 40, online }: { initials: string; colo
       {online && (
         <div style={{
           position: 'absolute', bottom: 0, right: 0, width: size * 0.28, height: size * 0.28,
-          borderRadius: size, background: C.accent, border: '2px solid #0E1512',
+          borderRadius: size, background: C.online, border: '2px solid #000',
         }} />
       )}
     </div>
