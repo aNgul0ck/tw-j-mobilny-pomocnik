@@ -684,6 +684,7 @@ export default function RundaApp() {
   const selectedFriend = selected ? friends.find(f => f.profile.id === selected) ?? null : null;
 
   const headerAction = (() => {
+    if (active === 'map') return <GlassIcon size={38} onClick={() => selectTab('friends')}><Plus size={18} strokeWidth={2.2} color={C.text} /></GlassIcon>;
     if (active === 'feed') return <GlassIcon size={38} onClick={() => {}}><Plus size={18} strokeWidth={2.2} color={C.text} /></GlassIcon>;
     if (active === 'friends') return <SmallButton variant="green">Dodaj</SmallButton>;
     if (active === 'profile') return <GlassIcon size={38} onClick={() => {}}><Plus size={18} strokeWidth={2.2} color={C.text} /></GlassIcon>;
