@@ -1,7 +1,7 @@
 import { useState, useRef, useLayoutEffect } from 'react';
 import {
   MapPin, ListChecks, Users, User,
-  Navigation, Layers, Plus, Heart, MessageCircle, Send, X, Radar, Bell, type LucideIcon,
+  Navigation, Layers, Plus, Heart, MessageCircle, Send, X, Radar, Bell, ChevronRight, type LucideIcon,
 } from 'lucide-react';
 import {
   C, ACTIVITY_TYPE_LABELS, ACTIVITY_TYPE_ICONS, PLACE_TYPE_LABELS,
@@ -262,56 +262,36 @@ function ActivityPost({ activity, mine, joined, onToggleJoin, interactions, defa
 }
 
 
-// ── Tab content: Osoby (live location) ─────────────────────────
-function OsobyContent({ onFocus, onSettings }: { onFocus: (id: string) => void; onSettings: () => void }) {
+// ── Tab content: Osoby (prosta lista osób) ─────────────────────
+function OsobyContent({ onFocus }: { onFocus: (id: string) => void }) {
   return (
-    <>
-      <div style={{ display: 'flex', gap: 18, overflowX: 'auto', padding: '4px 6px 16px' }} className="hide-scrollbar">
-        {sharing.map(f => (
-          <button key={f.profile.id} onClick={() => onFocus(f.profile.id)} style={{
-            display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 7, width: 52, flexShrink: 0,
-            background: 'none', border: 'none', cursor: 'pointer', fontFamily: FONT, padding: 0,
-          }}>
-            <Avatar initials={f.initials} color={f.color} size={44} online={f.online} />
-            <span style={{ fontSize: 11, color: C.textSec, maxWidth: 52, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{f.profile.name.split(' ')[0]}</span>
-          </button>
-        ))}
-      </div>
-
-      <SectionLabel>Udostępniają położenie · {sharing.length}</SectionLabel>
-      <Card style={{ marginBottom: 16 }}>
-        {sharing.map((f, i) => {
-          const a = f.activity;
-          return (
-            <div key={f.profile.id} style={{
-              display: 'flex', alignItems: 'center', gap: 13, padding: '13px 16px',
-              borderBottom: i === sharing.length - 1 ? 'none' : `0.5px solid ${C.borderLight}`,
-            }}>
-              <Avatar initials={f.initials} color={f.color} size={42} online />
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ fontSize: 15, fontWeight: 600, color: C.text }}>{f.profile.name}</div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginTop: 2 }}>
-                  {a ? (
-                    <>
-                      <span style={{ fontSize: 12 }}>{ACTIVITY_TYPE_ICONS[a.activity_type]}</span>
-                      <span style={{ fontSize: 13, fontWeight: 600, color: C.textSec }}>{ACTIVITY_TYPE_LABELS[a.activity_type]}</span>
-                      {a.place && <span style={{ fontSize: 12.5, color: C.textTert }}>· {a.place.name}</span>}
-                    </>
-                  ) : <span style={{ fontSize: 12.5, color: C.textTert }}>W pobliżu</span>}
-                </div>
-              </div>
-              <SmallButton onClick={() => onFocus(f.profile.id)}>Pokaż</SmallButton>
+    <div style={{ padding: '2px 0 8px' }}>
+      {friends.map((f, i) => {
+        const a = f.activity;
+        const subtitle = a?.place
+          ? `${a.place.name} · ${ACTIVITY_TYPE_LABELS[a.activity_type]}`
+          : f.online ? 'Udostępnia położenie' : 'Offline';
+        return (
+          <button
+            key={f.profile.id}
+            onClick={() => onFocus(f.profile.id)}
+            style={{
+              display: 'flex', alignItems: 'center', gap: 14, width: '100%',
+              padding: '12px 6px', background: 'none', border: 'none', cursor: 'pointer',
+              fontFamily: FONT, textAlign: 'left',
+              borderBottom: i === friends.length - 1 ? 'none' : `0.5px solid ${C.borderLight}`,
+            }}
+          >
+            <Avatar initials={f.initials} color={f.color} size={46} online={f.online} />
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ fontSize: 16, fontWeight: 600, color: C.text, letterSpacing: -0.2 }}>{f.profile.name}</div>
+              <div style={{ fontSize: 13, color: C.textTert, marginTop: 2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{subtitle}</div>
             </div>
-          );
-        })}
-      </Card>
-
-      <button onClick={onSettings} style={{
-        width: '100%', padding: '15px', borderRadius: 16, border: `0.5px solid ${C.border}`,
-        background: 'rgba(255,255,255,0.06)', color: C.text, fontWeight: 700, fontSize: 14.5, letterSpacing: -0.2,
-        cursor: 'pointer', fontFamily: FONT, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
-      }}><Radar size={17} strokeWidth={2} /> Ustaw automatyzacje położenia</button>
-    </>
+            <ChevronRight size={18} strokeWidth={2} color={C.textTert} style={{ flexShrink: 0 }} />
+          </button>
+        );
+      })}
+    </div>
   );
 }
 
@@ -704,6 +684,7 @@ export default function RundaApp() {
   const selectedFriend = selected ? friends.find(f => f.profile.id === selected) ?? null : null;
 
   const headerAction = (() => {
+    if (active === 'map') return <GlassIcon size={38} onClick={() => selectTab('friends')}><Plus size={18} strokeWidth={2.2} color={C.text} /></GlassIcon>;
     if (active === 'feed') return <GlassIcon size={38} onClick={() => {}}><Plus size={18} strokeWidth={2.2} color={C.text} /></GlassIcon>;
     if (active === 'friends') return <SmallButton variant="green">Dodaj</SmallButton>;
     if (active === 'profile') return <GlassIcon size={38} onClick={() => {}}><Plus size={18} strokeWidth={2.2} color={C.text} /></GlassIcon>;
@@ -793,7 +774,7 @@ export default function RundaApp() {
           </div>
 
           <div style={{ flex: 1, overflowY: 'auto', padding: '8px 16px 24px' }} className="hide-scrollbar">
-            {active === 'map' && <OsobyContent onFocus={focusFriend} onSettings={() => selectTab('profile')} />}
+            {active === 'map' && <OsobyContent onFocus={focusFriend} />}
             {active === 'feed' && <FeedContent joined={joined} onToggleJoin={toggleJoin} interactions={interactions} />}
             {active === 'friends' && <FriendsContent requests={requests} onAccept={acceptReq} onReject={acceptReq} />}
             {active === 'profile' && <JaContent />}
