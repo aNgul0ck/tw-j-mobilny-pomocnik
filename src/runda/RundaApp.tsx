@@ -1,7 +1,7 @@
 import { useState, useRef, useLayoutEffect } from 'react';
 import {
   MapPin, ListChecks, Users, User,
-  Navigation, Layers, Plus, Heart, MessageCircle, Send, X, Radar, Bell, type LucideIcon,
+  Navigation, Layers, Plus, Heart, MessageCircle, Send, X, Radar, Bell, ChevronRight, type LucideIcon,
 } from 'lucide-react';
 import {
   C, ACTIVITY_TYPE_LABELS, ACTIVITY_TYPE_ICONS, PLACE_TYPE_LABELS,
