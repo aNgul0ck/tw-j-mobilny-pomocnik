@@ -773,7 +773,7 @@ export default function RundaApp() {
           </div>
 
           <div style={{ flex: 1, overflowY: 'auto', padding: '8px 16px 24px' }} className="hide-scrollbar">
-            {active === 'map' && <OsobyContent onFocus={focusFriend} onSettings={() => selectTab('profile')} />}
+            {active === 'map' && <OsobyContent onFocus={focusFriend} />}
             {active === 'feed' && <FeedContent joined={joined} onToggleJoin={toggleJoin} interactions={interactions} />}
             {active === 'friends' && <FriendsContent requests={requests} onAccept={acceptReq} onReject={acceptReq} />}
             {active === 'profile' && <JaContent />}
